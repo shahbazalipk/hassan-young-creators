@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Personal portfolio of Hassan — a curious Class 5 student who loves learning, creating, and building amazing websites."
+    />
+    <meta name="author" content="Hassan" />
+    <meta name="theme-color" content="#0b1026" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Hassan | Young Web Creator" />
+    <meta
+      property="og:description"
+      content="Personal portfolio of Hassan — a curious Class 5 student who loves learning, creating, and building amazing websites."
+    />
+    <meta property="og:image" content="assets/og-preview.svg" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Hassan | Young Web Creator" />
+    <meta
+      name="twitter:description"
+      content="Personal portfolio of Hassan — a curious Class 5 student who loves learning, creating, and building amazing websites."
+    />
+
+    <title>Hassan | Young Web Creator</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <div class="cursor" aria-hidden="true"></div>
+    <div class="cursor-ring" aria-hidden="true"></div>
+
+    <div class="bg-shapes" aria-hidden="true">
+      <span class="shape shape-1"></span>
+      <span class="shape shape-2"></span>
+      <span class="shape shape-3"></span>
+      <span class="shape shape-4"></span>
+    </div>
+
+    <header class="site-header" id="top">
+      <nav class="navbar" aria-label="Primary">
+        <a class="brand" href="#top" data-cursor="link">
+          <span class="brand-mark" aria-hidden="true">H</span>
+          <span class="brand-text">Hassan</span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="nav-menu"
+          aria-label="Open menu"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <ul class="nav-menu" id="nav-menu">
+          <li><a href="#about" data-cursor="link">About</a></li>
+          <li><a href="#achievements" data-cursor="link">Achievements</a></li>
+          <li><a href="#skills" data-cursor="link">Skills</a></li>
+          <li><a href="#projects" data-cursor="link">Websites</a></li>
+          <li><a href="#capabilities" data-cursor="link">I Can Do</a></li>
+          <li><a href="#journey" data-cursor="link">Journey</a></li>
+          <li><a href="#goals" data-cursor="link">Goals</a></li>
+          <li><a href="#fun-facts" data-cursor="link">Fun Facts</a></li>
+          <li><a href="#contact" data-cursor="link">Contact</a></li>
+        </ul>
+
+        <button
+          class="theme-toggle"
+          type="button"
+          aria-label="Switch to light theme"
+          data-cursor="link"
+        >
+          <span class="theme-icon theme-icon-moon" aria-hidden="true">☾</span>
+          <span class="theme-icon theme-icon-sun" aria-hidden="true">☀</span>
+        </button>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="intro" aria-label="Introduction">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-inner">
+          <p class="hero-brand reveal-ready">Hassan</p>
+          <div class="typewriter" aria-live="polite">
+            <div class="typewriter-line-track" aria-hidden="true">
+              <span class="typewriter-line"></span>
+            </div>
+            <p class="typewriter-text">
+              <span id="typed-text"></span><span class="typed-cursor" aria-hidden="true"></span>
+            </p>
+          </div>
+          <a
+            class="explore-btn"
+            href="#about"
+            data-cursor="link"
+            aria-label="Explore more about Hassan"
+          >
+            <span>Explore More</span>
+            <span class="explore-arrow" aria-hidden="true">↓</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="section about" id="about">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="eyebrow">Get to know me</p>
+            <h2>About Me</h2>
+          </header>
+          <div class="about-grid reveal">
+            <div class="about-portrait" aria-hidden="true">
+              <div class="portrait-ring">
+                <div class="portrait-core">
+                  <span class="portrait-initial">H</span>
+                </div>
+              </div>
+              <p class="portrait-caption">Class 5 · Age 10</p>
+            </div>
+            <div class="about-copy">
+              <p id="about-text"></p>
+              <ul class="about-traits" aria-label="Hassan's strengths">
+                <li>Smart</li>
+                <li>Curious</li>
+                <li>Creative</li>
+                <li>Hardworking</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section achievements" id="achievements">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="eyebrow">Milestones</p>
+            <h2>My Achievements</h2>
+            <p class="section-lead">
+              Small steps, big progress — and plenty more to learn ahead.
+            </p>
+          </header>
+          <div class="achievements-grid" id="achievements-grid"></div>
+        </div>
+      </section>
+
+      <section class="section skills" id="skills">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="eyebrow">Growing every day</p>
+            <h2>My Skills</h2>
+            <p class="section-lead">
+              I’m a talented young learner who keeps improving through practice.
+            </p>
+          </header>
+          <div class="skills-grid" id="skills-grid"></div>
+        </div>
+      </section>
+
+      <section class="section projects" id="projects">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="eyebrow">Portfolio</p>
+            <h2>My Four Websites</h2>
+            <p class="section-lead">
+              Four projects that show what I’ve learned so far — with more on the way.
+            </p>
+          </header>
+          <div class="projects-grid" id="projects-grid"></div>
+        </div>
+      </section>
+
+      <section class="section capabilities" id="capabilities">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="eyebrow">Abilities</p>
+            <h2>Things I Can Do</h2>
+            <p class="section-lead">
+              From ideas to screens — here’s how I turn curiosity into creations.
+            </p>
+          </header>
+          <div class="capabilities-grid" id="capabilities-grid"></div>
+        </div>
+      </section>
+
+      <section class="section journey" id="journey">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="eyebrow">Story so far</p>
+            <h2>My Journey</h2>
+          </header>
+          <ol class="timeline" id="timeline"></ol>
+        </div>
+      </section>
+
+      <section class="section goals" id="goals">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="eyebrow">Looking ahead</p>
+            <h2>My Goals</h2>
+            <p class="section-lead">
+              I’m excited about the future and ready to keep building, learning, and helping.
+            </p>
+          </header>
+          <ul class="goals-list" id="goals-list"></ul>
+        </div>
+      </section>
+
+      <section class="section fun-facts" id="fun-facts">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="eyebrow">A little more</p>
+            <h2>Fun Facts</h2>
+          </header>
+          <div class="fun-facts-grid" id="fun-facts-grid"></div>
+        </div>
+      </section>
+
+      <section class="section contact" id="contact">
+        <div class="container">
+          <div class="contact-card reveal">
+            <p class="eyebrow">Say hello</p>
+            <h2 id="contact-heading">Let’s Connect</h2>
+            <p class="contact-message" id="contact-message"></p>
+            <p class="contact-note" id="contact-note"></p>
+            <div class="contact-actions" id="contact-actions"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p id="footer-line"></p>
+        <p class="footer-year">
+          © <span id="footer-year"></span> Hassan. All rights reserved.
+        </p>
+      </div>
+    </footer>
+
+    <div
+      class="modal"
+      id="project-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      hidden
+    >
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-panel" role="document">
+        <button class="modal-close" type="button" aria-label="Close dialog" data-close-modal>
+          ×
+        </button>
+        <div class="modal-icon" aria-hidden="true">✨</div>
+        <h3 id="modal-title">Project link coming soon</h3>
+        <p id="modal-body">
+          This project page isn’t online yet. Check back soon — or ask a parent to add the real
+          link in <code>js/data.js</code>.
+        </p>
+        <button class="btn btn-primary" type="button" data-close-modal data-cursor="link">
+          Got it
+        </button>
+      </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "KidMind AI",
+  "short_name": "KidMind",
+  "description": "KidMind AI — AI-powered learning for children aged 5–12.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "assets/brand/app-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/brand/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

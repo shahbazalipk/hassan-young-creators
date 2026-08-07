@@ -1,0 +1,385 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PARENT_ADMIN
+}
+
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum MessageStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
+enum ChallengeStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  PROJECT_CREATE
+  PROJECT_UPDATE
+  PROJECT_DELETE
+  PROJECT_PUBLISH
+  PROFILE_UPDATE
+  MESSAGE_READ
+  MESSAGE_ARCHIVE
+  MESSAGE_DELETE
+  SUBMISSION_APPROVE
+  SUBMISSION_REJECT
+  SETTINGS_UPDATE
+  CHALLENGE_UPDATE
+  RESOURCE_UPDATE
+  BADGE_UPDATE
+  SPAM_BLOCK
+  VISITOR_CHAT_REPLY
+  VISITOR_CHAT_BLOCK
+  VISITOR_CHAT_DELETE
+  DATA_EXPORT
+  DELETE_SCOPE
+  DELETE_ALL_DATA
+  SUBMISSION_DELETE
+}
+
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+  BLOCKED
+}
+
+enum ChatSenderRole {
+  VISITOR
+  ADMIN
+}
+
+enum ChatDeliveryStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+model AdminUser {
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  passwordHash          String
+  name                  String    @default("Parent Guardian")
+  role                  Role      @default(PARENT_ADMIN)
+  totpSecret            String?
+  totpEnabled           Boolean   @default(false)
+  resetTokenHash        String?
+  resetTokenExpiresAt   DateTime?
+  failedLoginAttempts   Int       @default(0)
+  lockedUntil           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  sessions              Session[]
+  activities            ActivityLog[]
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  ipHash    String?
+  userAgent String?
+}
+
+model SiteSettings {
+  id                      Int      @id @default(1)
+  parentContactEmail      String   @default("")
+  showParentEmailPublicly Boolean  @default(false)
+  contactFormEnabled      Boolean  @default(true)
+  guestbookEnabled        Boolean  @default(true)
+  challengeSubmissionsOn  Boolean  @default(true)
+  maintenanceMode         Boolean  @default(false)
+  themeDefault            String   @default("dark")
+  accentCyan              String   @default("#3de7ff")
+  accentViolet            String   @default("#9b6bff")
+  accentAmber             String   @default("#ffd166")
+  accentCoral             String   @default("#ff7a6e")
+  socialLinksJson         String   @default("[]")
+  privacyNotice           String   @default("This website belongs to a child. Contact is managed by a parent or guardian. We never ask children for home addresses, phone numbers, school names, or personal email addresses. Visitor messages and inspiration submissions are reviewed before anything becomes public.")
+  homepageAnnouncement    String   @default("")
+  footerText              String   @default("Designed with curiosity and built with confidence by Hassan.")
+  publicSubmissionsEnabled Boolean @default(true)
+  visitorMessagingEnabled Boolean @default(true)
+  updatedAt               DateTime @updatedAt
+}
+
+model Profile {
+  id                   Int      @id @default(1)
+  displayName          String   @default("Hassan")
+  age                  Int      @default(10)
+  classLevel           String   @default("Class 5")
+  introHeadline        String   @default("Young Web Creator")
+  aboutText            String
+  avatarPath           String?
+  motivationalMessage  String   @default("If I can start creating at 10, you can start too. Begin with one small idea, keep learning, and never be afraid of mistakes.")
+  safetyReminder       String   @default("Always ask a parent, guardian, or teacher before sharing anything online.")
+  updatedAt            DateTime @updatedAt
+}
+
+model Skill {
+  id        String   @id @default(cuid())
+  name      String
+  level     Int      @default(50)
+  note      String   @default("")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  label       String
+  value       Int?
+  icon        String   @default("⭐")
+  animated    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FunFact {
+  id        String   @id @default(cuid())
+  text      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Goal {
+  id        String   @id @default(cuid())
+  text      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JourneyStep {
+  id        String   @id @default(cuid())
+  title     String
+  detail    String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Capability {
+  id        String   @id @default(cuid())
+  title     String
+  icon      String   @default("✨")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  title          String
+  description    String
+  technologies   String        @default("[]")
+  url            String?
+  imagePath      String?
+  accent         String        @default("cyan")
+  status         ProjectStatus @default(DRAFT)
+  featured       Boolean       @default(false)
+  completedAt    DateTime?
+  sortOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model ContactMessage {
+  id                 String        @id @default(cuid())
+  senderName         String
+  senderEmail        String
+  subject            String
+  body               String
+  status             MessageStatus @default(UNREAD)
+  emailDeliveryStatus String       @default("saved_only")
+  emailDeliveryNote  String?
+  ipHash             String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+}
+
+model GuestbookEntry {
+  id           String           @id @default(cuid())
+  nickname     String           @default("Anonymous Creator")
+  message      String
+  status       SubmissionStatus @default(PENDING)
+  moderatedNote String?
+  ipHash       String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model Challenge {
+  id          String          @id @default(cuid())
+  title       String
+  description String
+  status      ChallengeStatus @default(DRAFT)
+  publishAt   DateTime?
+  archiveAt   DateTime?
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  submissions ChallengeSubmission[]
+}
+
+model ChallengeSubmission {
+  id          String           @id @default(cuid())
+  challengeId String
+  challenge   Challenge        @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  nickname    String           @default("Anonymous Creator")
+  note        String
+  status      SubmissionStatus @default(PENDING)
+  ipHash      String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  icon        String   @default("🏅")
+  color       String   @default("#3de7ff")
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model InspirationMessage {
+  id        String           @id @default(cuid())
+  nickname  String           @default("Anonymous Creator")
+  message   String
+  status    SubmissionStatus @default(PENDING)
+  featured  Boolean          @default(false)
+  ipHash    String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model LearningResource {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String
+  url         String?
+  isExternal  Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProjectIdea {
+  id        String   @id @default(cuid())
+  title     String
+  prompt    String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RoadmapStep {
+  id        String   @id @default(cuid())
+  title     String
+  detail    String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ParentCornerCard {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RateLimitBucket {
+  id          String   @id
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BlockedIp {
+  id        String   @id @default(cuid())
+  ipHash    String   @unique
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
+model VisitorConversation {
+  id               String             @id @default(cuid())
+  publicId         String             @unique @default(cuid())
+  visitorTokenHash String             @unique
+  status           ConversationStatus @default(ACTIVE)
+  archived         Boolean            @default(false)
+  blocked          Boolean            @default(false)
+  flagged          Boolean            @default(false)
+  lastMessageAt    DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  messages         VisitorChatMessage[]
+}
+
+model VisitorChatMessage {
+  id             String             @id @default(cuid())
+  publicId       String             @unique @default(cuid())
+  conversationId String
+  conversation   VisitorConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderRole     ChatSenderRole
+  body           String
+  status         ChatDeliveryStatus @default(SENT)
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  visitorReadAt  DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([conversationId, createdAt])
+}
+
+model ActivityLog {
+  id        String       @id @default(cuid())
+  userId    String?
+  user      AdminUser?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type      ActivityType
+  summary   String
+  metaJson  String       @default("{}")
+  createdAt DateTime     @default(now())
+}

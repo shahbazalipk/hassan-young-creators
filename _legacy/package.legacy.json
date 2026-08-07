@@ -1,0 +1,14 @@
+{
+  "name": "hassan-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal portfolio website for Hassan",
+  "scripts": {
+    "start": "npx --yes serve -l 4173",
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}

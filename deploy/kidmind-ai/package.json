@@ -1,0 +1,15 @@
+{
+  "name": "kidmind-ai",
+  "version": "1.0.0",
+  "main": "admin-rbac.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node tests/quiz-core.test.mjs && node tests/question-count.test.mjs && node tests/quiz-restart-count.test.mjs && node tests/quiz-restart-insession.test.mjs && node tests/quiz-dashboard-restart.test.mjs && node tests/age-calculator.test.mjs && node tests/question-selection.test.mjs && node tests/sign-in-flow.test.mjs && node tests/admin-login.test.mjs && node tests/admin-panel-guard.test.mjs && node tests/splash-flow.test.mjs && node tests/splash-stuck.test.mjs && node tests/auth-restore.test.mjs && node tests/quiz-resume.test.mjs && node tests/final-fixes.test.mjs && node tests/account-store.test.mjs && node tests/account-settings.test.mjs && node tests/account-settings-flow.test.mjs && node tests/account-settings-admin-flow.test.mjs && node tests/admin-quiz-controls.test.mjs && node tests/certificate-save.test.mjs && node tests/certificate-save-flow.test.mjs && node tests/admin-data-reset.test.mjs && node tests/clear-all-data-flow.test.mjs && node tests/branding.test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

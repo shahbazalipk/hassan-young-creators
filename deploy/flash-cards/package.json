@@ -1,0 +1,17 @@
+{
+  "name": "slash-cards",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Slash Cards quiz game — HTML, CSS, JavaScript. Created by HASSAAN.",
+  "scripts": {
+    "start": "npx --yes serve -l 8765 .",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node tests/questions.test.js",
+    "test:e2e": "npx --yes playwright test --config=playwright.config.js",
+    "test:ui": "npx --yes playwright test --config=playwright.config.js --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0"
+  }
+}

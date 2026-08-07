@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Hassan portfolio preview">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1026"/>
+      <stop offset="100%" stop-color="#1a1450"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3de7ff"/>
+      <stop offset="50%" stop-color="#9b6bff"/>
+      <stop offset="100%" stop-color="#ffd166"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="220" cy="140" r="120" fill="#3de7ff" opacity="0.18"/>
+  <circle cx="980" cy="480" r="160" fill="#9b6bff" opacity="0.2"/>
+  <text x="600" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="96" font-weight="700" fill="url(#accent)">Hassan</text>
+  <text x="600" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#b7c0de">Young Web Creator · Class 5</text>
+  <rect x="420" y="420" width="360" height="8" rx="4" fill="url(#accent)"/>
+</svg>

@@ -1,0 +1,319 @@
+@import "tailwindcss";
+@import "./portfolio.css";
+
+:root {
+  --admin-bg: #f4f6fb;
+  --admin-ink: #172033;
+  --admin-muted: #5b667a;
+  --admin-card: #ffffff;
+  --admin-line: #e4e9f2;
+  --admin-accent: #2f6bff;
+  --admin-sidebar: #0b1b3a;
+  --admin-sidebar-active: #2f6bff;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  background: var(--admin-bg);
+  color: var(--admin-ink);
+  font-family: var(--font-body), "Nunito", sans-serif;
+}
+
+.admin-sidebar,
+.admin-sidebar-panel {
+  background: linear-gradient(180deg, #0d2348 0%, #0b1b3a 55%, #091530 100%);
+  color: #f5f8ff;
+  box-shadow: 8px 0 30px rgba(9, 21, 48, 0.18);
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 48px;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  color: #e8eefc;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: left;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.admin-nav-item:hover,
+.admin-nav-item:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  outline: none;
+}
+
+.admin-nav-item:focus-visible {
+  box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.55);
+}
+
+.admin-nav-item.is-active {
+  background: var(--admin-sidebar-active);
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(47, 107, 255, 0.35);
+}
+
+.admin-nav-item.is-collapsed {
+  justify-content: center;
+  padding-inline: 0.55rem;
+}
+
+.admin-nav-icon {
+  width: 1.5rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.admin-nav-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #ffd166;
+  color: #1c2438;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.admin-logout-btn {
+  background: rgba(255, 120, 120, 0.12);
+}
+
+.admin-logout-btn:hover,
+.admin-logout-btn:focus-visible {
+  background: rgba(255, 120, 120, 0.22);
+}
+
+.admin-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.admin-icon-btn:hover,
+.admin-icon-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+.admin-icon-btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.55);
+}
+
+.admin-card {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-line);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(23, 32, 51, 0.05);
+}
+
+.admin-input {
+  width: 100%;
+  border: 1px solid var(--admin-line);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  background: #fff;
+}
+
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.55rem 1rem;
+  border-radius: 12px;
+  font-weight: 700;
+  background: var(--admin-accent);
+  color: white;
+}
+
+.admin-btn.secondary {
+  background: #eef2ff;
+  color: #27356a;
+}
+
+.admin-btn.danger {
+  background: #ffe8e5;
+  color: #9b2c2c;
+}
+
+.admin-btn.danger:focus-visible,
+.admin-btn.secondary:focus-visible,
+.admin-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.45);
+}
+
+.admin-btn.danger:disabled,
+.admin-btn.secondary:disabled,
+.admin-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.admin-dialog {
+  width: min(100%, 28rem);
+  max-height: min(90vh, 40rem);
+  overflow: auto;
+  border-radius: 16px;
+  border: 1px solid #fecaca;
+  background: #fff;
+  padding: 1.25rem 1.35rem;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+}
+
+.admin-dialog-wide {
+  width: min(100%, 36rem);
+}
+
+.admin-dialog-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.75rem;
+  border-radius: 999px;
+  background: #fff1f2;
+  color: #9f1239;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.admin-more-actions {
+  position: relative;
+  display: inline-flex;
+}
+
+.admin-more-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 40;
+  min-width: 16rem;
+  padding: 0.55rem;
+  border-radius: 12px;
+  border: 1px solid var(--admin-line);
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(23, 32, 51, 0.16);
+}
+
+.admin-more-menu-label {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9f1239;
+}
+
+.admin-more-menu-danger {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 0.75rem;
+  border-radius: 10px;
+  text-align: left;
+  font-weight: 700;
+  color: #9b2c2c;
+  background: transparent;
+}
+
+.admin-more-menu-danger:hover,
+.admin-more-menu-danger:focus-visible {
+  background: #fff1f2;
+  outline: none;
+}
+
+.admin-danger-zone {
+  border: 1px solid #fecaca;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff7f7 0%, #ffffff 100%);
+  padding: 1.25rem 1.35rem;
+  box-shadow: 0 10px 30px rgba(159, 18, 57, 0.06);
+}
+
+.admin-danger-zone-header {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.admin-danger-zone-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #ffe4e6;
+  color: #9f1239;
+  font-weight: 800;
+}
+
+.toast {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 80;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: #111827;
+  color: white;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.confetti-piece {
+  position: fixed;
+  width: 8px;
+  height: 12px;
+  top: -20px;
+  z-index: 70;
+  animation: confettiFall 1.6s ease-in forwards;
+}
+
+@keyframes confettiFall {
+  to {
+    transform: translateY(100vh) rotate(420deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-nav-item,
+  .admin-sidebar-panel {
+    transition: none;
+  }
+}

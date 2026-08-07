@@ -1,0 +1,178 @@
+/* KidMind AI — branding & typography */
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
+
+:root {
+  --brand-font: "Plus Jakarta Sans", "Nunito", "Segoe UI", system-ui, sans-serif;
+  --brand-cyan: #06b6d4;
+  --brand-purple: #8b5cf6;
+  --brand-indigo: #6366f1;
+  --brand-text: #0f172a;
+  --brand-text-muted: #64748b;
+}
+
+body {
+  font-family: var(--brand-font);
+}
+
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand-logo__icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.brand-logo__icon--sm {
+  width: 32px;
+  height: 32px;
+}
+
+.brand-logo__icon--lg {
+  width: 88px;
+  height: 88px;
+}
+
+.brand-logo__icon--splash {
+  width: 112px;
+  height: 112px;
+}
+
+.brand-logo__text {
+  font-family: var(--brand-font);
+  font-weight: 800;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.brand-logo__text--dark {
+  color: var(--brand-text);
+  text-shadow: none;
+}
+
+.brand-logo__text--sm {
+  font-size: clamp(1rem, 4vw, 1.35rem);
+}
+
+.brand-logo__ai {
+  background: linear-gradient(135deg, var(--brand-cyan), var(--brand-purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand-logo--horizontal img.brand-logo__wordmark {
+  height: 36px;
+  width: auto;
+}
+
+.brand-logo--horizontal img.brand-logo__wordmark--sm {
+  height: 28px;
+}
+
+.topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.topbar-brand .brand-logo__icon--sm {
+  width: 28px;
+  height: 28px;
+}
+
+.topbar-brand .brand-logo__text {
+  font-size: clamp(0.85rem, 3.5vw, 1.05rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-brand .brand-logo__ai {
+  color: #c4b5fd;
+  background: none;
+  -webkit-text-fill-color: #c4b5fd;
+}
+
+.splash-brand .brand-logo {
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.splash-brand .brand-logo__text {
+  font-size: clamp(1.75rem, 6vw, 2.25rem);
+}
+
+.app-footer {
+  text-align: center;
+  padding: 1.5rem 1rem 2rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+}
+
+.app-footer a {
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.app-footer a:hover {
+  text-decoration: underline;
+}
+
+.admin-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.admin-brand-logo img {
+  width: 40px;
+  height: 40px;
+}
+
+.admin-brand-logo span {
+  font-family: var(--brand-font);
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.admin-login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-login-brand img {
+  width: 72px;
+  height: 72px;
+}
+
+.admin-login-brand h1 {
+  font-family: var(--brand-font);
+  font-size: 1.75rem !important;
+  margin-bottom: 0 !important;
+  background: linear-gradient(135deg, var(--brand-cyan), var(--brand-purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+
+.certificate-brand-logo {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 0.75rem;
+  display: block;
+}
