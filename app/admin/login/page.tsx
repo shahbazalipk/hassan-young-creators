@@ -11,15 +11,24 @@ function LoginForm() {
   const [requires2FA, setRequires2FA] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  async function loadAuthBootstrap() {
+    const res = await fetch("/api/auth", { cache: "no-store" });
+    if (!res.ok) {
+      throw new Error("Could not initialize secure login.");
+    }
+    const data = await res.json();
+    if (!data?.csrfToken) {
+      throw new Error("Could not initialize secure login.");
+    }
+    setCsrfToken(data.csrfToken);
+    if (data.isLoggedIn) router.replace("/admin");
+    if (data.pending2FA) setRequires2FA(true);
+    return data.csrfToken as string;
+  }
+
   useEffect(() => {
-    fetch("/api/auth")
-      .then((r) => r.json())
-      .then((data) => {
-        setCsrfToken(data.csrfToken || "");
-        if (data.isLoggedIn) router.replace("/admin");
-        if (data.pending2FA) setRequires2FA(true);
-      })
-      .catch(() => setError("Could not initialize secure login."));
+    loadAuthBootstrap().catch(() => setError("Could not initialize secure login. Please refresh the page."));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -28,32 +37,36 @@ function LoginForm() {
     setError("");
     const form = new FormData(event.currentTarget);
     try {
+      // Always ensure a fresh CSRF token (important after proxy/API fixes).
+      const token = csrfToken || (await loadAuthBootstrap());
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: String(form.get("email") || ""),
           password: String(form.get("password") || ""),
-          totpCode: String(form.get("totpCode") || ""),
-          csrfToken,
+          totpCode: String(form.get("totpCode") || "") || undefined,
+          csrfToken: token,
         }),
       });
       const data = await res.json();
       if (data.requires2FA) {
         setRequires2FA(true);
-        setCsrfToken(data.csrfToken || csrfToken);
+        setCsrfToken(data.csrfToken || token);
         setLoading(false);
         return;
       }
       if (!res.ok || !data.ok) {
         setError(data.error || "Login failed.");
+        // Refresh CSRF after failed attempt so the next try is valid.
+        loadAuthBootstrap().catch(() => undefined);
         setLoading(false);
         return;
       }
       // Hard navigation refreshes server components (including public nav auth state).
       window.location.assign(params.get("next") || "/admin");
     } catch {
-      setError("Network error.");
+      setError("Network error. Please refresh and try again.");
       setLoading(false);
     }
   }

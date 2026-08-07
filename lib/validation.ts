@@ -3,7 +3,9 @@ import { z } from "zod";
 export const loginSchema = z.object({
   email: z.string().email().max(200),
   password: z.string().min(8).max(200),
-  totpCode: z.string().regex(/^\d{6}$/).optional().or(z.literal("")),
+  totpCode: z
+    .union([z.literal(""), z.string().regex(/^\d{6}$/), z.undefined()])
+    .optional(),
   csrfToken: z.string().min(10),
 });
 
