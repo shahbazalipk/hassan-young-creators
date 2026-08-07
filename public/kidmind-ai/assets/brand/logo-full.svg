@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 128" role="img" aria-label="KidMind AI">
+  <defs>
+    <linearGradient id="full-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="full-text" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <linearGradient id="full-ai" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(8 8) scale(0.21875)">
+    <rect width="512" height="512" rx="112" fill="url(#full-bg)"/>
+    <path d="M256 148c-52 0-94 38-94 86 0 22 8 42 22 56-8 14-12 30-12 46 0 44 36 80 84 80s84-36 84-80c0-16-4-32-12-46 14-14 22-34 22-56 0-48-42-86-94-86z" fill="#fff"/>
+    <path d="M256 96 132 148l124 52 124-52-124-52z" fill="#fbbf24"/>
+    <path d="M380 148v58c0 24-56 42-124 42s-124-18-124-42v-58" fill="#f59e0b"/>
+    <g stroke="#6366f1" stroke-width="8" stroke-linecap="round" fill="none">
+      <path d="M210 250h92"/><circle cx="210" cy="250" r="10" fill="#8b5cf6" stroke="none"/><circle cx="302" cy="250" r="10" fill="#f97316" stroke="none"/>
+    </g>
+    <path d="M128 132l10 22 24 4-17 17 4 24-21-11-21 11 4-24-17-17 24-4z" fill="#fef08a"/>
+    <path d="M88 340c0-18 28-32 62-32s62 14 62 32v52c0 10-28 18-62 18s-62-8-62-18v-52z" fill="#34d399"/>
+  </g>
+  <text x="136" y="78" font-family="'Plus Jakarta Sans', 'Nunito', 'Segoe UI', sans-serif" font-size="52" font-weight="800" fill="url(#full-text)">KidMind </text>
+  <text x="392" y="78" font-family="'Plus Jakarta Sans', 'Nunito', 'Segoe UI', sans-serif" font-size="52" font-weight="800" fill="url(#full-ai)">AI</text>
+</svg>

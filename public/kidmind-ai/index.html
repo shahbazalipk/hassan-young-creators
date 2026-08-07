@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/kidmind-ai/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KidMind AI — Smart Learning for Kids</title>
+  <meta name="description" content="KidMind AI helps children aged 5–12 learn with fun AI-powered quizzes, progress tracking, and certificates.">
+  <meta name="application-name" content="KidMind AI">
+  <meta name="theme-color" content="#8b5cf6">
+  <meta name="apple-mobile-web-app-title" content="KidMind AI">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KidMind AI">
+  <meta property="og:title" content="KidMind AI — Smart Learning for Kids">
+  <meta property="og:description" content="AI-powered learning platform for children. Quiz, grow, and earn certificates with KidMind AI.">
+  <meta property="og:image" content="assets/brand/app-icon.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="KidMind AI">
+  <meta name="twitter:description" content="AI-powered learning for children aged 5–12.">
+  <meta name="twitter:image" content="assets/brand/app-icon.png">
+  <link rel="icon" type="image/svg+xml" href="assets/brand/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon.png">
+  <link rel="apple-touch-icon" href="assets/brand/app-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="brand.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="report.css">
+
+  <style id="hassan-portfolio-back-style">
+    #hassan-back-to-portfolio {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2147483000;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.55);
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: #fff !important;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-decoration: none !important;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.28);
+      backdrop-filter: blur(8px);
+    }
+    #hassan-back-to-portfolio:hover,
+    #hassan-back-to-portfolio:focus-visible {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+      outline: none;
+    }
+    #hassan-back-to-portfolio span[aria-hidden="true"] {
+      font-size: 16px;
+    }
+    @media (max-width: 640px) {
+      #hassan-back-to-portfolio {
+        top: 10px;
+        left: 10px;
+        padding: 9px 12px;
+        font-size: 13px;
+      }
+    }
+  </style>
+
+</head>
+<body>
+  <a id="hassan-back-to-portfolio" href="/" data-cursor="link" aria-label="Back to Hassan’s Website"><span aria-hidden="true">←</span> Back to Hassan’s Website</a>
+
+  <div id="app-error-banner" class="app-error-banner" hidden></div>
+
+  <!-- Splash -->
+  <section id="splash-screen" class="screen active">
+    <canvas id="splash-fireworks" class="splash-fireworks" aria-hidden="true"></canvas>
+    <div class="splash-content splash-brand">
+      <div class="brand-logo">
+        <img src="assets/brand/logo-icon.svg" alt="" class="brand-logo__icon brand-logo__icon--splash" width="112" height="112">
+        <span class="brand-logo__text">KidMind <span class="brand-logo__ai">AI</span></span>
+      </div>
+      <div class="splash-credit-wrap">
+        <span class="splash-sparkle splash-sparkle--1" aria-hidden="true">✨</span>
+        <p class="splash-credit">Made by HASSAAN</p>
+        <span class="splash-sparkle splash-sparkle--2" aria-hidden="true">✨</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Global topbar (visible after login) -->
+  <header id="app-topbar" class="app-topbar hidden" role="banner">
+    <div class="app-topbar-inner">
+      <div class="topbar-brand brand-logo">
+        <img src="assets/brand/logo-icon.svg" alt="" class="brand-logo__icon brand-logo__icon--sm" width="28" height="28">
+        <span class="brand-logo__text">KidMind <span class="brand-logo__ai">AI</span></span>
+      </div>
+      <div class="profile-menu">
+        <button type="button" id="profile-btn" class="profile-btn" aria-haspopup="true" aria-expanded="false">
+          <span class="profile-avatar" id="profile-avatar-initials">👤</span>
+          <span id="profile-btn-label" class="profile-btn-label">My Account</span>
+        </button>
+        <div id="profile-dropdown" class="profile-dropdown hidden" role="menu">
+          <p class="profile-dropdown-name" id="profile-dropdown-name">Student</p>
+          <button type="button" id="menu-admin-panel" class="profile-item hidden" role="menuitem">🛡️ Admin Panel</button>
+          <button type="button" id="menu-my-profile" class="profile-item" role="menuitem">👤 My Profile</button>
+          <button type="button" id="menu-account-settings" class="profile-item" role="menuitem">⚙️ Account Settings</button>
+          <button type="button" id="menu-my-progress" class="profile-item" role="menuitem">📊 My Progress</button>
+          <button type="button" id="menu-my-certificates" class="profile-item" role="menuitem">🎓 My Certificates</button>
+          <hr class="profile-divider">
+          <button type="button" id="menu-logout" class="profile-item profile-item-danger" role="menuitem">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <button id="theme-toggle-btn" class="theme-toggle" type="button" aria-label="Toggle theme">🌙</button>
+
+  <div class="app-container">
+    <!-- Language Selection -->
+    <section id="language-screen" class="screen">
+      <header class="header">
+        <div class="brand-logo">
+          <img src="assets/brand/logo-icon.svg" alt="" class="brand-logo__icon" width="44" height="44">
+          <span class="brand-logo__text">KidMind <span class="brand-logo__ai">AI</span></span>
+        </div>
+        <p class="tagline">Learn, play, and grow smarter every day!</p>
+      </header>
+      <div class="card">
+        <h2 data-i18n="selectLanguage">Select Language</h2>
+        <p class="card-subtitle flow-hint">Step 1 of 4 — Choose your language to begin</p>
+        <div class="lang-grid">
+          <button class="lang-btn btn-primary" data-lang="en" type="button">🇬🇧 English</button>
+          <button class="lang-btn btn-primary" data-lang="ur" type="button">🇵🇰 Urdu</button>
+          <button class="lang-btn btn-primary" data-lang="ar" type="button">🇸🇦 Arabic</button>
+        </div>
+        <p class="card-subtitle inline-link-row">
+          Already have an account?
+          <button type="button" id="go-to-login-btn" class="btn-inline-link">Log In</button>
+        </p>
+      </div>
+    </section>
+
+    <!-- Student Details -->
+    <section id="student-screen" class="screen">
+      <header class="header header-compact">
+        <div class="brand-logo">
+          <img src="assets/brand/logo-icon.svg" alt="" class="brand-logo__icon brand-logo__icon--sm" width="32" height="32">
+          <span class="brand-logo__text brand-logo__text--sm">KidMind <span class="brand-logo__ai">AI</span></span>
+        </div>
+      </header>
+      <div class="card">
+        <h2 data-i18n="studentDetails">Student Details</h2>
+        <p class="card-subtitle flow-hint">Step 2 of 4 — Tell us about the student</p>
+        <p class="card-subtitle">Enter the student's information to continue.</p>
+        <form id="student-form">
+          <label for="student-name-input" data-i18n="studentName">Student Name</label>
+          <input id="student-name-input" type="text" required autocomplete="name" placeholder="Enter name">
+
+          <label for="student-age-input" data-i18n="studentAge">Child Age</label>
+          <input id="student-age-input" type="number" min="5" max="15" required placeholder="5–15">
+
+          <label for="question-count-input">Number of Questions</label>
+          <select id="question-count-input" required>
+            <option value="10">10 Questions</option>
+            <option value="15">15 Questions</option>
+            <option value="30">30 Questions</option>
+            <option value="60">60 Questions</option>
+            <option value="90">90 Questions</option>
+          </select>
+
+          <button type="submit" class="btn-primary" data-i18n="next">Next</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Sign In (new students — after Student Details) -->
+    <section id="sign-in-screen" class="screen">
+      <header class="header header-compact">
+        <div class="brand-logo">
+          <img src="assets/brand/logo-icon.svg" alt="" class="brand-logo__icon brand-logo__icon--sm" width="32" height="32">
+          <span class="brand-logo__text brand-logo__text--sm">KidMind <span class="brand-logo__ai">AI</span></span>
+        </div>
+      </header>
+      <div class="card">
+        <h2 data-i18n="signInTitle">Sign In</h2>
+        <p class="card-subtitle flow-hint">Step 3 of 4 — Parent Sign In</p>
+        <p class="card-subtitle">Create your parent account to start the quiz.</p>
+        <form id="sign-in-form">
+          <label for="sign-in-email-input" data-i18n="parentEmail">Parent Email</label>
+          <input id="sign-in-email-input" type="email" required autocomplete="email" placeholder="parent@email.com">
+
+          <label for="sign-in-password-input" data-i18n="parentPassword">Password</label>
+          <input id="sign-in-password-input" type="password" required autocomplete="new-password" placeholder="••••••••">
+
+          <button type="submit" class="btn-primary" data-i18n="signIn">Sign In</button>
+          <button type="button" id="sign-in-back-btn" class="btn-ghost">← Back to Student Details</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Log In (returning users) -->
+    <section id="login-screen" class="screen">
+      <header class="header header-compact">
+        <div class="brand-logo">
+          <img src="assets/brand/logo-icon.svg" alt="" class="brand-logo__icon brand-logo__icon--sm" width="32" height="32">
+          <span class="brand-logo__text brand-logo__text--sm">KidMind <span class="brand-logo__ai">AI</span></span>
+        </div>
+      </header>
+      <div class="card">
+        <h2 data-i18n="loginTitle">Log In</h2>
+        <p class="card-subtitle">Welcome back! Log in with your parent email and password.</p>
+        <form id="login-form">
+          <label for="login-email-input" data-i18n="parentEmail">Parent Email</label>
+          <input id="login-email-input" type="email" required autocomplete="email" placeholder="parent@email.com">
+
+          <label for="login-password-input" data-i18n="parentPassword">Password</label>
+          <input id="login-password-input" type="password" required autocomplete="current-password" placeholder="••••••••">
+
+          <button type="submit" class="btn-primary" data-i18n="logIn">Log In</button>
+        </form>
+        <p class="card-subtitle inline-link-row">
+          New student?
+          <button type="button" id="go-to-student-btn" class="btn-inline-link">Start Student Details</button>
+        </p>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard-screen" class="screen">
+      <div class="card dashboard-card">
+        <h2 data-i18n="dashboard">Dashboard</h2>
+        <p class="welcome-text"><span data-i18n="welcome">Welcome</span>, <strong id="dashboard-student-name"></strong>! 🌟</p>
+        <p class="age-text">Age: <span id="dashboard-student-age"></span></p>
+        <p class="dashboard-hint">Ready to learn? Pick a quiz length and earn your certificate!</p>
+        <div class="dashboard-actions">
+          <button id="start-quiz-btn" class="btn-primary" type="button" data-i18n="startQuiz">Start Quiz</button>
+          <button id="resume-quiz-btn" class="btn-secondary" type="button" data-i18n="resumeQuiz">Resume Quiz</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quiz -->
+    <section id="quiz-screen" class="screen">
+      <div class="card quiz-card">
+        <div id="admin-quiz-controls" class="admin-quiz-controls hidden" aria-label="Owner admin quiz controls">
+          <div class="admin-quiz-controls__header">
+            <span class="admin-quiz-controls__badge">Owner</span>
+            <strong class="admin-quiz-controls__title">Admin Controls</strong>
+            <label class="admin-test-toggle" for="admin-test-mode-toggle">
+              <input type="checkbox" id="admin-test-mode-toggle" aria-label="Auto-pass quiz answers">
+              <span>Auto-Pass</span>
+            </label>
+          </div>
+          <div class="admin-quiz-controls__actions">
+            <button type="button" id="admin-skip-btn" class="btn-secondary btn-sm">Skip Question</button>
+            <select id="admin-jump-select" class="admin-jump-select" aria-label="Jump to question"></select>
+            <button type="button" id="admin-finish-btn" class="btn-secondary btn-sm">Finish Quiz</button>
+            <button type="button" id="admin-back-panel-btn" class="btn-ghost btn-sm">← Admin Panel</button>
+          </div>
+        </div>
+        <div class="quiz-header">
+          <span id="quiz-counter" class="quiz-counter"></span>
+          <span id="quiz-category" class="quiz-category"></span>
+        </div>
+        <h3 id="quiz-question-text" class="quiz-question"></h3>
+        <div id="quiz-options" class="quiz-options"></div>
+        <p id="quiz-feedback" class="quiz-feedback"></p>
+        <button id="quiz-submit-btn" class="btn-primary" type="button" disabled data-i18n="submit">Submit Answer</button>
+      </div>
+    </section>
+
+    <!-- Result -->
+    <section id="result-screen" class="screen">
+      <div class="card result-card-wrap">
+        <div id="result-card-container"></div>
+        <div id="certificate-container"></div>
+        <div id="certificate-actions" class="certificate-actions hidden" aria-label="Certificate actions">
+          <p id="certificate-save-message" class="certificate-save-message hidden" role="status"></p>
+          <div class="certificate-actions__grid">
+            <button type="button" id="cert-save-btn" class="btn-primary cert-action-btn">Save</button>
+            <button type="button" id="cert-download-btn" class="btn-secondary cert-action-btn">Download</button>
+            <button type="button" id="cert-print-btn" class="btn-secondary cert-action-btn">Print</button>
+            <button type="button" id="cert-view-later-btn" class="btn-ghost cert-action-btn">View Later</button>
+          </div>
+        </div>
+        <div class="result-actions">
+          <button id="view-certificate-btn" class="btn-primary" type="button" data-i18n="viewCertificate">View Certificate</button>
+          <button id="try-again-btn" class="btn-secondary" type="button" data-i18n="startAgain">Start Again</button>
+          <button id="back-dashboard-btn" class="btn-ghost" type="button" data-i18n="backToDashboard">Back to Dashboard</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Profile panels -->
+    <section id="profile-screen" class="screen">
+      <div class="card">
+        <h2>My Profile</h2>
+        <div class="profile-info-grid">
+          <p><strong>Name:</strong> <span id="profile-name-display"></span></p>
+          <p><strong>Age:</strong> <span id="profile-age-display"></span></p>
+          <p><strong>Email:</strong> <span id="profile-email-display"></span></p>
+          <p><strong>Language:</strong> <span id="profile-lang-display"></span></p>
+        </div>
+        <button type="button" id="profile-back-btn" class="btn-ghost">← Back to Dashboard</button>
+      </div>
+    </section>
+
+    <section id="settings-screen" class="screen">
+      <div class="card">
+        <h2>Account Settings</h2>
+        <p class="card-subtitle">Your KidMind AI account details are managed by your parent login.</p>
+
+        <p id="settings-error" class="form-error hidden" role="alert"></p>
+        <p id="settings-success" class="form-success hidden" role="status">Account updated successfully.</p>
+
+        <div id="settings-view-mode">
+          <div class="profile-info-grid">
+            <p><strong>Student Name:</strong> <span id="settings-name-display"></span></p>
+            <p><strong>Original Age:</strong> <span id="settings-original-age-display"></span></p>
+            <p><strong>Current Calculated Age:</strong> <span id="settings-current-age-display"></span></p>
+            <p><strong>Age Recorded Date:</strong> <span id="settings-age-date-display"></span></p>
+            <p><strong>Parent Email:</strong> <span id="settings-email-display"></span></p>
+            <p><strong>Password:</strong> <span id="settings-password-display" class="masked-password">******</span></p>
+          </div>
+          <button type="button" id="settings-edit-btn" class="btn-secondary">Edit</button>
+        </div>
+
+        <form id="settings-edit-form" class="hidden">
+          <label for="settings-email-input">Parent Email</label>
+          <input id="settings-email-input" type="email" required autocomplete="email" placeholder="parent@email.com">
+
+          <label for="settings-age-input">Update Child Age <span class="label-optional">(optional — resets age recorded date to today)</span></label>
+          <input id="settings-age-input" type="number" min="5" max="15" placeholder="5–15">
+
+          <label for="settings-new-password">New Password <span class="label-optional">(leave blank to keep current)</span></label>
+          <div class="password-field">
+            <input id="settings-new-password" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+            <button type="button" class="btn-toggle-password" aria-label="Show password">Show</button>
+          </div>
+
+          <label for="settings-confirm-password">Confirm Password</label>
+          <div class="password-field">
+            <input id="settings-confirm-password" type="password" autocomplete="new-password" placeholder="Re-enter new password">
+            <button type="button" class="btn-toggle-password" aria-label="Show password">Show</button>
+          </div>
+
+          <label for="settings-current-password">Current Password</label>
+          <div class="password-field">
+            <input id="settings-current-password" type="password" required autocomplete="current-password" placeholder="Enter current password">
+            <button type="button" class="btn-toggle-password" aria-label="Show password">Show</button>
+          </div>
+
+          <button type="submit" class="btn-primary">Save Changes</button>
+          <button type="button" id="settings-cancel-btn" class="btn-ghost">Cancel</button>
+        </form>
+
+        <button type="button" id="settings-back-btn" class="btn-ghost">← Back to Dashboard</button>
+      </div>
+    </section>
+
+    <section id="progress-screen" class="screen">
+      <div class="card">
+        <h2>My Progress</h2>
+        <div id="progress-list" class="progress-list"></div>
+        <button type="button" id="progress-back-btn" class="btn-ghost">← Back to Dashboard</button>
+      </div>
+    </section>
+
+    <section id="certificates-screen" class="screen">
+      <div class="card">
+        <h2>My Certificates</h2>
+        <div id="certificates-list" class="certificates-list"></div>
+        <button type="button" id="certificates-back-btn" class="btn-ghost">← Back to Dashboard</button>
+      </div>
+    </section>
+  </div>
+
+  <footer class="app-footer">
+    <p>&copy; <span id="footer-year"></span> <a href="index.html">KidMind AI</a> — Smart learning for kids</p>
+    <p class="footer-credit">Made by HASSAAN</p>
+  </footer>
+
+  <!-- Question count modal -->
+  <div id="question-count-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="question-count-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card card">
+      <h3 id="question-count-title">How many questions do you want to play?</h3>
+      <select id="question-count-modal-select">
+        <option value="10">10 Questions</option>
+        <option value="15">15 Questions</option>
+        <option value="30">30 Questions</option>
+        <option value="60">60 Questions</option>
+        <option value="90">90 Questions</option>
+      </select>
+      <button type="button" id="question-count-confirm" class="btn-primary">Start Quiz</button>
+      <button type="button" id="question-count-cancel" class="btn-ghost">Cancel</button>
+    </div>
+  </div>
+
+  <script src="brand.js"></script>
+  <script src="data-store.js"></script>
+  <script src="account-store.js"></script>
+  <script src="security.js"></script>
+  <script src="age-calculator.js"></script>
+  <script src="quiz-core.js"></script>
+  <script src="admin-rbac.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="session-store.js"></script>
+  <script src="quiz-progress-store.js"></script>
+  <script src="admin-session.js"></script>
+  <script src="route-guard.js"></script>
+  <script src="admin-credentials.js"></script>
+  <script src="question-bank-data.js"></script>
+  <script src="question-bank.js"></script>
+  <script src="question-history.js"></script>
+  <script src="questions-data.js"></script>
+  <script src="app-fallback.js"></script>
+  <script src="report.js"></script>
+  <script src="certificate-save.js"></script>
+  <script src="account-settings.js"></script>
+  <script src="script.js"></script>
+  <script>
+    AppFallback.registerSplashSafetyNet();
+    AppFallback.registerGlobalErrorHandlers();
+    var fy = document.getElementById("footer-year");
+    if (fy) fy.textContent = new Date().getFullYear();
+  </script>
+  <script src="splash-fireworks.js"></script>
+  <script src="splash.js"></script>
+</body>
+</html>

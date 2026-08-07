@@ -12,7 +12,7 @@ async function main() {
         description:
           "An AI-powered learning website where kids take quizzes, track progress, and earn certificates.",
         technologies: JSON.stringify(["HTML", "CSS", "JavaScript"]),
-        url: "https://shahbazalipk.github.io/hassan-kidmind-ai/",
+        url: "/kidmind-ai",
         accent: "cyan",
         status: ProjectStatus.PUBLISHED,
         featured: true,
@@ -23,7 +23,7 @@ async function main() {
         description:
           "A fun flash-card quiz game that helps kids practice questions and celebrate learning.",
         technologies: JSON.stringify(["HTML", "CSS", "JavaScript"]),
-        url: "https://shahbazalipk.github.io/hassan-flash-cards/",
+        url: "/flash-cards",
         accent: "amber",
         status: ProjectStatus.PUBLISHED,
         featured: true,

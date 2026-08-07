@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="KidMind AI">
+  <defs>
+    <linearGradient id="km-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="45%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="km-brain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+    <linearGradient id="km-cap" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <filter id="km-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#1e1b4b" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#km-bg)"/>
+  <g filter="url(#km-shadow)">
+    <!-- Book -->
+    <path d="M88 340c0-18 28-32 62-32s62 14 62 32v52c0 10-28 18-62 18s-62-8-62-18v-52z" fill="#34d399"/>
+    <path d="M150 308v84c0 10-28 18-62 18V326c34 0 62-14 62-18z" fill="#10b981"/>
+    <path d="M118 318h24v8h-24z" fill="#a7f3d0" opacity="0.9"/>
+    <!-- Brain body -->
+    <path d="M256 148c-52 0-94 38-94 86 0 22 8 42 22 56-8 14-12 30-12 46 0 44 36 80 84 80s84-36 84-80c0-16-4-32-12-46 14-14 22-34 22-56 0-48-42-86-94-86z" fill="url(#km-brain)"/>
+    <path d="M256 148c-36 0-66 24-78 58 10-6 22-10 36-10 28 0 52 16 64 40 12-24 36-40 64-40 14 0 26 4 36 10-12-34-42-58-78-58z" fill="#bae6fd" opacity="0.55"/>
+    <!-- Brain fold -->
+    <path d="M256 210c-28 0-50 18-58 44 16 10 36 16 58 16s42-6 58-16c-8-26-30-44-58-44z" fill="#7dd3fc" opacity="0.45"/>
+    <!-- AI circuit -->
+    <g stroke="#6366f1" stroke-width="8" stroke-linecap="round" fill="none">
+      <path d="M210 250h36m20 0h36"/>
+      <path d="M256 226v48"/>
+      <circle cx="210" cy="250" r="10" fill="#8b5cf6" stroke="none"/>
+      <circle cx="256" cy="250" r="10" fill="#06b6d4" stroke="none"/>
+      <circle cx="302" cy="250" r="10" fill="#f97316" stroke="none"/>
+      <path d="M256 250v42"/>
+      <circle cx="256" cy="292" r="8" fill="#22d3ee" stroke="none"/>
+    </g>
+    <!-- Graduation cap -->
+    <path d="M256 96 132 148l124 52 124-52-124-52z" fill="url(#km-cap)"/>
+    <path d="M380 148v58c0 24-56 42-124 42s-124-18-124-42v-58" fill="#f59e0b"/>
+    <circle cx="380" cy="148" r="10" fill="#fde68a"/>
+    <!-- Light bulb spark -->
+    <path d="M392 118c8-10 22-10 30 0 8 10 2 24-10 28-4 8-12 14-20 14s-16-6-20-14c-12-4-18-18-10-28 8-10 22-10 30 0z" fill="#fef08a"/>
+    <rect x="396" y="156" width="12" height="14" rx="4" fill="#fde047"/>
+    <!-- Star -->
+    <path d="M128 132l10 22 24 4-17 17 4 24-21-11-21 11 4-24-17-17 24-4z" fill="#fef08a"/>
+    <!-- Rocket -->
+    <g transform="translate(360 300) rotate(18)">
+      <path d="M0 0c18-28 44-40 44-40s26 12 44 40c-14 4-24 14-28 28-4-14-14-24-28-28z" fill="#fb7185"/>
+      <circle cx="44" cy="-40" r="10" fill="#fff"/>
+      <path d="M20 18c-8 10-10 22-8 32l-12-8c2-14 8-24 20-24z" fill="#f43f5e"/>
+      <path d="M68 18c8 10 10 22 8 32l12-8c-2-14-8-24-20-24z" fill="#f43f5e"/>
+    </g>
+  </g>
+</svg>

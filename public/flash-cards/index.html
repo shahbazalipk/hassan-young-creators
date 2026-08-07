@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/flash-cards/">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Slash Cards — fun age-based quiz game for kids. Created by HASSAAN." />
+  <title>Slash Cards | Created by HASSAAN</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <style id="hassan-portfolio-back-style">
+    #hassan-back-to-portfolio {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2147483000;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.55);
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: #fff !important;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-decoration: none !important;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.28);
+      backdrop-filter: blur(8px);
+    }
+    #hassan-back-to-portfolio:hover,
+    #hassan-back-to-portfolio:focus-visible {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+      outline: none;
+    }
+    #hassan-back-to-portfolio span[aria-hidden="true"] {
+      font-size: 16px;
+    }
+    @media (max-width: 640px) {
+      #hassan-back-to-portfolio {
+        top: 10px;
+        left: 10px;
+        padding: 9px 12px;
+        font-size: 13px;
+      }
+    }
+  </style>
+
+</head>
+<body>
+  <a id="hassan-back-to-portfolio" href="/" data-cursor="link" aria-label="Back to Hassan’s Website"><span aria-hidden="true">←</span> Back to Hassan’s Website</a>
+
+  <!-- Fireworks canvas (welcome + celebrations) -->
+  <canvas id="fireworks-canvas" aria-hidden="true"></canvas>
+
+  <!-- ========== 1. WELCOME SCREEN ========== -->
+  <section id="screen-welcome" class="screen active" aria-label="Welcome">
+    <div class="welcome-content">
+      <p class="brand-mark">SLASH CARDS</p>
+      <h1 class="welcome-title">Ready to Slash?</h1>
+      <p class="welcome-subtitle">Fun quiz cards that grow with you</p>
+      <p class="creator-credit">Created by <span>HASSAAN</span></p>
+      <button type="button" id="btn-enter" class="btn btn-primary btn-lg pulse">
+        Start Playing
+      </button>
+      <p class="welcome-hint">Tap anywhere or press Start to begin</p>
+    </div>
+  </section>
+
+  <!-- ========== 2. STUDENT SETUP SCREEN ========== -->
+  <section id="screen-setup" class="screen" aria-label="Student Setup" hidden>
+    <div class="panel setup-panel">
+      <header class="panel-header">
+        <h2>Student Setup</h2>
+        <p>Tell us about you, then pick how many Slash Cards to play</p>
+      </header>
+
+      <form id="setup-form" class="setup-form" novalidate>
+        <div class="field">
+          <label for="student-name">Your Name</label>
+          <input
+            type="text"
+            id="student-name"
+            name="name"
+            placeholder="Enter your name"
+            maxlength="40"
+            autocomplete="given-name"
+            required
+          />
+          <span class="field-error" id="name-error" role="alert"></span>
+        </div>
+
+        <div class="field">
+          <label for="student-age">Your Age</label>
+          <input
+            type="number"
+            id="student-age"
+            name="age"
+            placeholder="5–16"
+            min="5"
+            max="16"
+            required
+          />
+          <span class="field-error" id="age-error" role="alert"></span>
+        </div>
+
+        <fieldset class="card-count-field">
+          <legend>How many Slash Cards?</legend>
+          <div class="card-count-options" role="radiogroup" aria-label="Number of questions">
+            <label class="count-option">
+              <input type="radio" name="cardCount" value="10" checked />
+              <span>10</span>
+            </label>
+            <label class="count-option">
+              <input type="radio" name="cardCount" value="20" />
+              <span>20</span>
+            </label>
+            <label class="count-option">
+              <input type="radio" name="cardCount" value="30" />
+              <span>30</span>
+            </label>
+            <label class="count-option">
+              <input type="radio" name="cardCount" value="40" />
+              <span>40</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <button type="submit" class="btn btn-primary btn-block">Let's Play!</button>
+      </form>
+
+      <aside class="leaderboard-preview" aria-label="Leaderboard">
+        <h3>Top Players</h3>
+        <ol id="setup-leaderboard" class="leaderboard-list"></ol>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ========== 3. QUIZ / SLASH CARDS SCREEN ========== -->
+  <section id="screen-quiz" class="screen" aria-label="Quiz Gameplay" hidden>
+    <div class="quiz-layout">
+      <header class="quiz-topbar">
+        <div class="quiz-meta">
+          <span id="quiz-progress">Card 1 / 10</span>
+          <span id="quiz-score">Score: 0</span>
+        </div>
+        <div class="timer-wrap" aria-live="polite">
+          <svg class="timer-ring" viewBox="0 0 36 36" aria-hidden="true">
+            <path class="timer-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path id="timer-arc" class="timer-fg" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span id="timer-value">10</span>
+        </div>
+      </header>
+
+      <article class="slash-card" id="slash-card">
+        <div class="slash-card-banner">
+          <span id="card-student-name">Player</span>
+          <span id="card-student-age">Age —</span>
+        </div>
+        <p class="slash-card-label">Slash Card</p>
+        <h2 id="question-text" class="question-text">Question loading…</h2>
+        <div id="answer-options" class="answer-options" role="group" aria-label="Answer choices"></div>
+        <p id="feedback" class="feedback" aria-live="assertive"></p>
+      </article>
+
+      <aside class="quiz-leaderboard panel-sm">
+        <h3>Leaderboard</h3>
+        <ol id="quiz-leaderboard" class="leaderboard-list"></ol>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ========== 4. CERTIFICATE & REWARDS SCREEN ========== -->
+  <section id="screen-certificate" class="screen" aria-label="Certificate" hidden>
+    <div class="certificate-layout">
+      <div id="certificate" class="certificate" role="img" aria-label="Completion certificate">
+        <div class="certificate-ornament top"></div>
+        <p class="certificate-brand">SLASH CARDS</p>
+        <h2 class="certificate-title">Certificate of Completion</h2>
+        <p class="certificate-presented">This certifies that</p>
+        <p id="cert-name" class="certificate-name">Student</p>
+        <p class="certificate-body">
+          Age <span id="cert-age">—</span> · Score
+          <span id="cert-score">0</span> / <span id="cert-total">0</span>
+          (<span id="cert-percent" class="certificate-percent"></span>
+        </p>
+        <p class="certificate-footer">Created by HASSAAN · <span id="cert-date"></span></p>
+        <div class="certificate-ornament bottom"></div>
+      </div>
+
+      <div class="certificate-actions">
+        <button type="button" id="btn-save-cert" class="btn btn-primary">Save Certificate</button>
+        <button type="button" id="btn-copy-link" class="btn btn-secondary">Copy Link</button>
+        <button type="button" id="btn-share-parents" class="btn btn-secondary">Share with Parents</button>
+        <button type="button" id="btn-continue" class="btn btn-accent">Continue</button>
+      </div>
+
+      <p id="action-toast" class="toast" hidden role="status"></p>
+
+      <aside class="final-leaderboard panel-sm">
+        <h3>Top Scores</h3>
+        <ol id="final-leaderboard" class="leaderboard-list"></ol>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ========== 5. HIDDEN ADMIN PANEL ========== -->
+  <section id="screen-admin-login" class="screen" aria-label="Admin Login" hidden>
+    <div class="panel admin-panel">
+      <header class="panel-header">
+        <h2>Admin Login</h2>
+        <p>Authorized access only</p>
+      </header>
+      <form id="admin-login-form" class="setup-form" novalidate>
+        <div class="field">
+          <label for="admin-email">Email</label>
+          <input type="email" id="admin-email" autocomplete="username" required />
+          <span class="field-error" id="admin-email-error" role="alert"></span>
+        </div>
+        <div class="field">
+          <label for="admin-password">Password</label>
+          <input type="password" id="admin-password" autocomplete="current-password" required />
+          <span class="field-error" id="admin-password-error" role="alert"></span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        <button type="button" id="btn-admin-back" class="btn btn-ghost btn-block">Back to Game</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="screen-admin" class="screen" aria-label="Admin Panel" hidden>
+    <div class="admin-dashboard">
+      <header class="admin-header">
+        <div>
+          <h2>Question Manager</h2>
+          <p>Add, edit, or delete Slash Card questions</p>
+        </div>
+        <div class="admin-header-actions">
+          <button type="button" id="btn-admin-logout" class="btn btn-ghost">Logout</button>
+        </div>
+      </header>
+
+      <form id="question-form" class="question-form panel">
+        <input type="hidden" id="question-id" value="" />
+        <div class="field">
+          <label for="q-text">Question</label>
+          <textarea id="q-text" rows="2" required maxlength="280"></textarea>
+        </div>
+        <div class="options-grid">
+          <div class="field">
+            <label for="q-opt-a">Option A</label>
+            <input type="text" id="q-opt-a" required maxlength="80" />
+          </div>
+          <div class="field">
+            <label for="q-opt-b">Option B</label>
+            <input type="text" id="q-opt-b" required maxlength="80" />
+          </div>
+          <div class="field">
+            <label for="q-opt-c">Option C</label>
+            <input type="text" id="q-opt-c" required maxlength="80" />
+          </div>
+          <div class="field">
+            <label for="q-opt-d">Option D</label>
+            <input type="text" id="q-opt-d" required maxlength="80" />
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div class="field">
+            <label for="q-correct">Correct Answer</label>
+            <select id="q-correct" required>
+              <option value="0">A</option>
+              <option value="1">B</option>
+              <option value="2">C</option>
+              <option value="3">D</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="q-difficulty">Difficulty / Age Band</label>
+            <select id="q-difficulty" required>
+              <option value="easy">Easy (ages 5–7)</option>
+              <option value="medium">Medium (ages 8–10)</option>
+              <option value="hard">Hard (ages 11–16)</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-form-actions">
+          <button type="submit" id="btn-save-question" class="btn btn-primary">Add Question</button>
+          <button type="button" id="btn-cancel-edit" class="btn btn-ghost" hidden>Cancel Edit</button>
+        </div>
+      </form>
+
+      <div class="admin-filters">
+        <label for="filter-difficulty">Filter</label>
+        <select id="filter-difficulty">
+          <option value="all">All difficulties</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+
+      <div id="questions-table-wrap" class="questions-table-wrap">
+        <table class="questions-table" aria-label="Quiz questions">
+          <thead>
+            <tr>
+              <th>Question</th>
+              <th>Difficulty</th>
+              <th>Correct</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="questions-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Secret admin trigger hint (triple-click brand / #admin) -->
+  <button type="button" id="admin-trigger" class="admin-trigger" aria-label="Admin access" title="Admin"></button>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

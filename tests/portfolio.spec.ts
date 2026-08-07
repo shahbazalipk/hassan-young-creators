@@ -22,28 +22,37 @@ test.describe("Hassan young creators platform", () => {
     await expect(page.getByText("parent or guardian", { exact: false })).toBeVisible();
   });
 
-  test("shows two live projects with working use links", async ({ page, context }) => {
+  test("shows two live projects with working same-domain use links", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/#projects");
     await expect(page.getByRole("heading", { name: "My Two Websites" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Flash Cards", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Use KidMind AI" })).toHaveAttribute(
       "href",
-      "https://shahbazalipk.github.io/hassan-kidmind-ai/"
+      "/kidmind-ai"
     );
     await expect(page.getByRole("link", { name: "Use Flash Cards" })).toHaveAttribute(
       "href",
-      "https://shahbazalipk.github.io/hassan-flash-cards/"
+      "/flash-cards"
     );
     await expect(page.getByText("Creative Website")).toHaveCount(0);
 
     const flashLink = page.getByRole("link", { name: "Use Flash Cards" });
     await flashLink.scrollIntoViewIfNeeded();
-    const [popup] = await Promise.all([context.waitForEvent("page"), flashLink.click()]);
-    await popup.waitForLoadState("domcontentloaded");
-    await expect(popup).toHaveURL(/shahbazalipk\.github\.io\/hassan-flash-cards\/?/);
-    await expect(popup.getByRole("heading", { name: "Ready to Slash?" })).toBeVisible();
-    await expect(popup.getByRole("button", { name: "Start Playing" })).toBeVisible();
+    await flashLink.click();
+    await page.waitForURL(/\/flash-cards\/?/);
+    await expect(page.getByRole("heading", { name: "Ready to Slash?" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Start Playing" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Back to Hassan/i })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Ready to Slash?" })).toBeVisible();
+
+    await page.goto("/kidmind-ai");
+    await page.waitForURL(/\/kidmind-ai\/?/);
+    await expect(page.getByRole("link", { name: /Back to Hassan/i })).toBeVisible();
+    await expect(page.locator("#splash-screen, #language-screen, .brand-logo").first()).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("link", { name: /Back to Hassan/i })).toBeVisible();
   });
 
   test("public site has no Admin Panel button or link", async ({ page }) => {
@@ -258,10 +267,10 @@ test.describe("Admin sidebar navigation", () => {
     await expect(page.getByRole("heading", { name: "KidMind AI", exact: false })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Flash Cards", exact: false })).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "https://shahbazalipk.github.io/hassan-kidmind-ai/" })
+      page.getByRole("link", { name: "/kidmind-ai" })
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "https://shahbazalipk.github.io/hassan-flash-cards/" })
+      page.getByRole("link", { name: "/flash-cards" })
     ).toBeVisible();
   });
 

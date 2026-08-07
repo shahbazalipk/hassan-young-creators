@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/kidmind-ai/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KidMind AI Admin</title>
+  <meta name="description" content="KidMind AI Admin Panel — manage quizzes, students, reports, and certificates.">
+  <meta name="application-name" content="KidMind AI Admin">
+  <meta name="theme-color" content="#8b5cf6">
+  <meta property="og:title" content="KidMind AI Admin">
+  <meta property="og:description" content="Admin dashboard for KidMind AI learning platform.">
+  <meta property="og:image" content="assets/brand/app-icon.png">
+  <link rel="icon" type="image/svg+xml" href="assets/brand/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon.png">
+  <link rel="apple-touch-icon" href="assets/brand/app-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="brand.css">
+  <link rel="stylesheet" href="admin.css">
+
+  <style id="hassan-portfolio-back-style">
+    #hassan-back-to-portfolio {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2147483000;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.55);
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: #fff !important;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-decoration: none !important;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.28);
+      backdrop-filter: blur(8px);
+    }
+    #hassan-back-to-portfolio:hover,
+    #hassan-back-to-portfolio:focus-visible {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+      outline: none;
+    }
+    #hassan-back-to-portfolio span[aria-hidden="true"] {
+      font-size: 16px;
+    }
+    @media (max-width: 640px) {
+      #hassan-back-to-portfolio {
+        top: 10px;
+        left: 10px;
+        padding: 9px 12px;
+        font-size: 13px;
+      }
+    }
+  </style>
+
+</head>
+<body>
+  <a id="hassan-back-to-portfolio" href="/" data-cursor="link" aria-label="Back to Hassan’s Website"><span aria-hidden="true">←</span> Back to Hassan’s Website</a>
+
+  <div id="admin-app">
+    <section id="admin-login" class="admin-section active">
+      <div class="admin-login-card">
+        <div class="admin-login-brand">
+          <img src="assets/brand/logo-icon.svg" alt="" width="72" height="72">
+          <h1>KidMind AI Admin</h1>
+        </div>
+        <p class="admin-subtitle">Owner-only access for HASSAAN</p>
+        <form id="admin-login-form">
+          <label for="admin-email">Email</label>
+          <input id="admin-email" type="email" required placeholder="admin@kidmind.ai" autocomplete="username">
+          <label for="admin-password">Password</label>
+          <input id="admin-password" type="password" required placeholder="••••••••" autocomplete="current-password">
+          <p id="admin-login-error" class="admin-error" hidden></p>
+          <button type="submit" class="admin-btn-primary">Sign In</button>
+        </form>
+        <div id="admin-login-credentials" class="admin-credentials-login"></div>
+      </div>
+    </section>
+
+    <section id="admin-dashboard" class="admin-section">
+      <aside class="admin-sidebar">
+        <div class="sidebar-header admin-brand-logo">
+          <img src="assets/brand/logo-icon.svg" alt="" width="40" height="40">
+          <span class="sidebar-title">KidMind AI</span>
+        </div>
+        <nav class="sidebar-nav">
+          <button class="nav-item active" data-panel="overview">Overview</button>
+          <button class="nav-item" data-panel="progress">Student Progress</button>
+          <button class="nav-item" data-panel="history">Quiz History</button>
+          <button class="nav-item" data-panel="certificates">Certificates</button>
+          <button class="nav-item" data-panel="courses">Courses</button>
+          <button class="nav-item" data-panel="questions">Questions</button>
+          <button class="nav-item" data-panel="reports">Reports</button>
+          <button class="nav-item" data-panel="settings">Settings</button>
+        </nav>
+        <div class="sidebar-footer">
+          <button id="admin-exit-btn" class="admin-btn-exit" type="button">Exit to KidMind AI</button>
+        </div>
+      </aside>
+
+      <main class="admin-main">
+        <header class="admin-topbar">
+          <h2 id="panel-title">Overview</h2>
+          <div class="topbar-actions">
+            <span class="admin-owner-badge">Owner: HASSAAN</span>
+            <label class="test-mode-toggle">
+              <input type="checkbox" id="test-mode-checkbox">
+              Test Mode (auto-pass)
+            </label>
+            <span id="admin-user-name" class="admin-user"></span>
+          </div>
+        </header>
+
+        <div id="panel-overview" class="admin-panel active">
+          <div class="dashboard-toolbar">
+            <p id="clear-all-success-message" class="admin-clear-success hidden" role="status"></p>
+            <button type="button" id="clear-all-data-btn" class="admin-btn-danger hidden">Clear All Data</button>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-card"><span class="stat-value" id="stat-students">0</span><span class="stat-label">Total Students</span></div>
+            <div class="stat-card"><span class="stat-value" id="stat-courses">1</span><span class="stat-label">Total Courses</span></div>
+            <div class="stat-card"><span class="stat-value" id="stat-quizzes">0</span><span class="stat-label">Total Quizzes</span></div>
+            <div class="stat-card"><span class="stat-value" id="stat-attempts">0</span><span class="stat-label">Total Attempts</span></div>
+            <div class="stat-card"><span class="stat-value" id="stat-passed">0</span><span class="stat-label">Passed Students</span></div>
+            <div class="stat-card"><span class="stat-value" id="stat-failed">0</span><span class="stat-label">Failed Students</span></div>
+            <div class="stat-card"><span class="stat-value" id="stat-certificates">0</span><span class="stat-label">Certificates Issued</span></div>
+            <div class="stat-card"><span class="stat-value" id="stat-questions">0</span><span class="stat-label">Question Bank</span></div>
+          </div>
+          <div class="activity-grid">
+            <div class="stat-card"><span class="stat-value" id="stat-daily">0</span><span class="stat-label">Daily Activity</span></div>
+            <div class="stat-card"><span class="stat-value" id="stat-weekly">0</span><span class="stat-label">Weekly Activity</span></div>
+            <div class="stat-card"><span class="stat-value" id="stat-monthly">0</span><span class="stat-label">Monthly Activity</span></div>
+          </div>
+        </div>
+
+        <div id="panel-progress" class="admin-panel">
+          <div id="progress-list" class="reports-list"></div>
+        </div>
+
+        <div id="panel-history" class="admin-panel">
+          <div id="history-list" class="reports-list"></div>
+        </div>
+
+        <div id="panel-certificates" class="admin-panel">
+          <div id="certificates-admin-list" class="reports-list"></div>
+        </div>
+
+        <div id="panel-courses" class="admin-panel">
+          <div id="courses-list" class="reports-list"></div>
+        </div>
+
+        <div id="panel-questions" class="admin-panel">
+          <div class="panel-toolbar">
+            <input id="question-search" type="search" placeholder="Search questions…">
+          </div>
+          <div id="questions-list" class="questions-list"></div>
+        </div>
+
+        <div id="panel-reports" class="admin-panel">
+          <div class="panel-toolbar report-export-toolbar">
+            <button type="button" id="export-student-btn" class="admin-btn-secondary">Export Student Report (CSV)</button>
+            <button type="button" id="export-quiz-btn" class="admin-btn-secondary">Export Quiz Report (CSV)</button>
+            <button type="button" id="export-course-btn" class="admin-btn-secondary">Export Course Report (CSV)</button>
+            <button type="button" id="export-cert-btn" class="admin-btn-secondary">Export Certificate Report (CSV)</button>
+          </div>
+          <div id="reports-list" class="reports-list"></div>
+        </div>
+
+        <div id="panel-settings" class="admin-panel">
+          <div class="settings-card">
+            <h3>Owner Access — HASSAAN Only</h3>
+            <p class="admin-owner-note">This admin panel is exclusive to the owner account. Students cannot access these controls.</p>
+            <div id="admin-credentials-display" class="admin-credentials"></div>
+            <hr>
+            <h3>Owner Quick Controls</h3>
+            <div class="owner-controls">
+              <button type="button" id="owner-open-quiz-btn" class="admin-btn-primary">Open Quiz (Test Mode)</button>
+              <button type="button" id="owner-refresh-stats-btn" class="admin-btn-secondary">Refresh Stats</button>
+              <button type="button" id="reset-test-data-btn" class="admin-btn-danger">Reset Test Data</button>
+            </div>
+            <p id="reset-test-data-message" class="admin-reset-message hidden" role="status"></p>
+            <hr>
+            <h3>Quiz Admin Controls (in app)</h3>
+            <ul class="owner-control-list">
+              <li>Skip Question</li>
+              <li>Jump to Question</li>
+              <li>Finish Quiz Early</li>
+              <li>Test Mode auto-pass &amp; certificate</li>
+            </ul>
+            <hr>
+            <h3>Certificate Rule</h3>
+            <p>KidMind AI students earn a certificate with at most <strong>1 wrong answer</strong>.</p>
+            <hr>
+            <h3>Test Mode</h3>
+            <p>When enabled, admin quiz attempts auto-pass with perfect score and certificate.</p>
+          </div>
+        </div>
+      </main>
+    </section>
+  </div>
+
+  <div id="clear-all-data-modal" class="admin-modal hidden" role="dialog" aria-modal="true" aria-labelledby="clear-all-data-title">
+    <div class="admin-modal-backdrop" id="clear-all-modal-backdrop"></div>
+    <div class="admin-modal-card">
+      <h3 id="clear-all-data-title">Warning!</h3>
+      <p class="admin-modal-message">
+        Are you sure you want to permanently delete all student data, quiz attempts, progress,
+        certificates, reports, and statistics?
+      </p>
+      <p class="admin-modal-note">This action cannot be undone.</p>
+      <div class="admin-modal-actions">
+        <button type="button" id="clear-all-cancel-btn" class="admin-btn-secondary">Cancel</button>
+        <button type="button" id="clear-all-confirm-btn" class="admin-btn-danger">Yes, Clear All Data</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="brand.js"></script>
+  <script src="data-store.js"></script>
+  <script src="security.js"></script>
+  <script src="quiz-core.js"></script>
+  <script src="admin-rbac.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="admin-session.js"></script>
+  <script src="route-guard.js"></script>
+  <script src="admin-credentials.js"></script>
+  <script src="question-bank-data.js"></script>
+  <script src="question-bank.js"></script>
+  <script src="question-history.js"></script>
+  <script src="questions-data.js"></script>
+  <script src="report.js"></script>
+  <script src="analytics.js"></script>
+  <script src="admin-data-reset.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

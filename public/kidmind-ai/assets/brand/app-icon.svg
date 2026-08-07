@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="KidMind AI App Icon">
+  <defs>
+    <linearGradient id="app-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="45%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="app-brain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+    <filter id="app-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#1e1b4b" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#app-bg)"/>
+  <g filter="url(#app-shadow)">
+    <path d="M88 340c0-18 28-32 62-32s62 14 62 32v52c0 10-28 18-62 18s-62-8-62-18v-52z" fill="#34d399"/>
+    <path d="M150 308v84c0 10-28 18-62 18V326c34 0 62-14 62-18z" fill="#10b981"/>
+    <path d="M256 148c-52 0-94 38-94 86 0 22 8 42 22 56-8 14-12 30-12 46 0 44 36 80 84 80s84-36 84-80c0-16-4-32-12-46 14-14 22-34 22-56 0-48-42-86-94-86z" fill="url(#app-brain)"/>
+    <g stroke="#6366f1" stroke-width="8" stroke-linecap="round" fill="none">
+      <path d="M210 250h92"/>
+      <circle cx="210" cy="250" r="10" fill="#8b5cf6" stroke="none"/>
+      <circle cx="256" cy="250" r="10" fill="#06b6d4" stroke="none"/>
+      <circle cx="302" cy="250" r="10" fill="#f97316" stroke="none"/>
+    </g>
+    <path d="M256 96 132 148l124 52 124-52-124-52z" fill="#fbbf24"/>
+    <path d="M380 148v58c0 24-56 42-124 42s-124-18-124-42v-58" fill="#f59e0b"/>
+    <path d="M128 132l10 22 24 4-17 17 4 24-21-11-21 11 4-24-17-17 24-4z" fill="#fef08a"/>
+    <g transform="translate(360 300) rotate(18)">
+      <path d="M0 0c18-28 44-40 44-40s26 12 44 40c-14 4-24 14-28 28-4-14-14-24-28-28z" fill="#fb7185"/>
+      <circle cx="44" cy="-40" r="10" fill="#fff"/>
+    </g>
+    <text x="256" y="468" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Nunito', sans-serif" font-size="56" font-weight="800" fill="#fff">KidMind AI</text>
+  </g>
+</svg>

@@ -27,8 +27,36 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Prevent Next from fighting our /kidmind-ai and /flash-cards trailing-slash handling.
+  skipTrailingSlashRedirect: true,
   images: {
     remotePatterns: [],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/kidmind-ai",
+        destination: "/kidmind-ai/",
+        permanent: false,
+      },
+      {
+        source: "/flash-cards",
+        destination: "/flash-cards/",
+        permanent: false,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/kidmind-ai/",
+        destination: "/kidmind-ai/index.html",
+      },
+      {
+        source: "/flash-cards/",
+        destination: "/flash-cards/index.html",
+      },
+    ];
   },
   async headers() {
     return [

@@ -21,6 +21,7 @@ function run(command, args) {
 console.log("Preparing production database...");
 run("npx", ["prisma", "db", "push", "--skip-generate"]);
 run("npx", ["tsx", "prisma/seed.ts"]);
+run("node", ["scripts/set-public-project-urls.mjs"]);
 
 const port = process.env.PORT || "3000";
 console.log(`Starting Hassan portfolio on port ${port}...`);

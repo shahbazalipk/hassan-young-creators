@@ -349,8 +349,6 @@ export function PublicSite({
                           <a
                             className="btn btn-primary"
                             href={project.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
                             data-cursor="link"
                           >
                             {project.title === "KidMind AI"
