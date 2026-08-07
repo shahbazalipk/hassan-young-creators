@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: hassan-portfolio
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: file:/data/prod.db
+      - key: DATA_DIR
+        value: /data
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: CSRF_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        value: parent@example.com
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: ADMIN_NAME
+        value: Hassan's Parent
+      - key: PARENT_CONTACT_EMAIL
+        value: parent@example.com
+      - key: APP_URL
+        sync: false

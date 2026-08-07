@@ -29,11 +29,11 @@ test.describe("Hassan young creators platform", () => {
     await expect(page.getByRole("heading", { name: "Flash Cards", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Use KidMind AI" })).toHaveAttribute(
       "href",
-      "http://localhost:5173/"
+      "https://shahbazalipk.github.io/hassan-kidmind-ai/"
     );
     await expect(page.getByRole("link", { name: "Use Flash Cards" })).toHaveAttribute(
       "href",
-      "http://127.0.0.1:8765/index.html"
+      "https://shahbazalipk.github.io/hassan-flash-cards/"
     );
     await expect(page.getByText("Creative Website")).toHaveCount(0);
 
@@ -41,7 +41,7 @@ test.describe("Hassan young creators platform", () => {
     await flashLink.scrollIntoViewIfNeeded();
     const [popup] = await Promise.all([context.waitForEvent("page"), flashLink.click()]);
     await popup.waitForLoadState("domcontentloaded");
-    await expect(popup).toHaveURL("http://127.0.0.1:8765/index.html");
+    await expect(popup).toHaveURL(/shahbazalipk\.github\.io\/hassan-flash-cards\/?/);
     await expect(popup.getByRole("heading", { name: "Ready to Slash?" })).toBeVisible();
     await expect(popup.getByRole("button", { name: "Start Playing" })).toBeVisible();
   });
@@ -251,15 +251,17 @@ test.describe("Admin sidebar navigation", () => {
     ).toHaveAttribute("href", "/");
   });
 
-  test("projects page lists KidMind AI and Flash Cards with development URLs", async ({
+  test("projects page lists KidMind AI and Flash Cards with public URLs", async ({
     page,
   }) => {
     await page.goto("/admin/projects");
     await expect(page.getByRole("heading", { name: "KidMind AI", exact: false })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Flash Cards", exact: false })).toBeVisible();
-    await expect(page.getByRole("link", { name: "http://localhost:5173/" })).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "http://127.0.0.1:8765/index.html" })
+      page.getByRole("link", { name: "https://shahbazalipk.github.io/hassan-kidmind-ai/" })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "https://shahbazalipk.github.io/hassan-flash-cards/" })
     ).toBeVisible();
   });
 

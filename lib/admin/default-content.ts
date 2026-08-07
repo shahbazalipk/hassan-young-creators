@@ -35,7 +35,7 @@ const DEFAULT_PROJECTS = [
     description:
       "A child-friendly learning platform where students can explore ideas and enjoy an engaging learning experience.",
     technologies: JSON.stringify(["HTML", "CSS", "JavaScript"]),
-    url: "http://localhost:5173/",
+    url: "https://shahbazalipk.github.io/hassan-kidmind-ai/",
     accent: "cyan",
     status: ProjectStatus.PUBLISHED,
     featured: true,
@@ -46,7 +46,7 @@ const DEFAULT_PROJECTS = [
     description:
       "An interactive flash-card website that helps students practise topics and remember what they learn.",
     technologies: JSON.stringify(["HTML", "CSS", "JavaScript"]),
-    url: "http://127.0.0.1:8765/index.html",
+    url: "https://shahbazalipk.github.io/hassan-flash-cards/",
     accent: "amber",
     status: ProjectStatus.PUBLISHED,
     featured: true,

@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.dockerignore
+.git
+.gitignore
+.deploy-tmp
+.next
+.env
+.env.*
+!.env.example
+prisma/*.db
+prisma/*.db-journal
+test-results
+playwright-report
+tests
+*.md
+.cursor

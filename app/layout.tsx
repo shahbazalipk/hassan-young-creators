@@ -14,18 +14,40 @@ const nunito = Nunito({
   display: "swap",
 });
 
+const siteTitle = "Hassan — Young Creator & Web Builder";
+const siteDescription =
+  "Meet Hassan, a 10-year-old young creator building fun and educational websites.";
+const siteUrl = process.env.APP_URL || "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "Hassan | Young Web Creator",
-  description:
-    "Personal portfolio and Young Creators Club for Hassan — a curious Class 5 student who loves learning, creating, and building amazing websites.",
-  metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
-  openGraph: {
-    title: "Hassan | Young Web Creator",
-    description:
-      "A child-safe portfolio and inspiration platform encouraging kids to learn and create.",
-    images: ["/og-preview.svg"],
+  title: siteTitle,
+  description: siteDescription,
+  metadataBase: new URL(siteUrl),
+  alternates: {
+    canonical: "/",
   },
-  icons: { icon: "/favicon.svg" },
+  openGraph: {
+    type: "website",
+    url: siteUrl,
+    title: siteTitle,
+    description: siteDescription,
+    siteName: "Hassan Portfolio",
+    images: [
+      {
+        url: "/og-preview.png",
+        width: 1200,
+        height: 630,
+        alt: "Hassan — Young Creator & Web Builder",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+    images: ["/og-preview.png"],
+  },
+  icons: { icon: [{ url: "/favicon.svg", type: "image/svg+xml" }] },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
