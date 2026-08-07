@@ -10,6 +10,19 @@
 #   hassan-young-creators deploy
 #   update production portfolio
 #
+# =============================================================================
+# STRICT WORKFLOW RULE (DO NOT BREAK)
+# =============================================================================
+# 1) NEVER edit application code directly on the live server.
+# 2) NEVER rsync local files onto the server for normal updates.
+# 3) NEVER patch production by hand (no live nano/vim of app files).
+# 4) ALL code/config changes happen LOCALLY in this repo first.
+# 5) Then: commit -> push to GitHub main -> run this deploy script.
+# 6) Server only does: git fetch/reset from GitHub + docker compose build.
+# 7) Do NOT modify other projects on glimzo (nespak, meetshahbaz, n8n, etc.).
+# 8) Server .env stays on the server only (never commit secrets).
+# =============================================================================
+#
 # Public URL:
 #   https://hassaan.meetshahbaz.pk/
 #
@@ -26,11 +39,11 @@
 #
 # USAGE (from local machine):
 #   ./scripts/deploy-glimzo.sh
-#   ./scripts/deploy-glimzo.sh --push     # commit already done; push main then deploy
+#   ./scripts/deploy-glimzo.sh --push     # push main then deploy
 #   ./scripts/deploy-glimzo.sh --status   # check container + HTTPS only
 #
-# USAGE (already on server):
-#   cd ~/hassan-portfolio && git pull origin main && docker compose up -d --build
+# Proper channel:
+#   local edit -> git commit -> git push origin main -> ./scripts/deploy-glimzo.sh
 # =============================================================================
 
 set -euo pipefail
@@ -52,6 +65,7 @@ push_main_if_requested() {
 
 remote_deploy() {
   echo "==> Deploying on ${SSH_HOST}:${APP_DIR} from GitHub (${BRANCH})..."
+  echo "==> Reminder: live server is updated ONLY from GitHub via this script."
   ssh "$SSH_HOST" "bash -s" <<REMOTE
 set -euo pipefail
 APP_DIR="${APP_DIR}"
@@ -59,7 +73,7 @@ REPO_URL="${REPO_URL}"
 BRANCH="${BRANCH}"
 
 if [ ! -d "\$APP_DIR/.git" ]; then
-  echo "Clone missing — cloning fresh..."
+  echo "Clone missing — cloning fresh from GitHub..."
   rm -rf "\$APP_DIR"
   git clone "\$REPO_URL" "\$APP_DIR"
 fi
@@ -78,6 +92,19 @@ fi
 
 mkdir -p public/uploads
 touch public/uploads/.gitkeep
+
+# Apply Hassan-only Apache configs from the repo (never edit other site configs).
+if [ -f deploy/apache-hassaan.meetshahbaz.pk.conf ]; then
+  sudo cp deploy/apache-hassaan.meetshahbaz.pk.conf /etc/apache2/sites-available/hassaan.meetshahbaz.pk.conf
+fi
+if [ -f deploy/apache-hassaan.meetshahbaz.pk-le-ssl.conf ]; then
+  sudo cp deploy/apache-hassaan.meetshahbaz.pk-le-ssl.conf /etc/apache2/sites-available/hassaan.meetshahbaz.pk-le-ssl.conf
+fi
+sudo a2enmod proxy proxy_http headers rewrite ssl >/dev/null
+sudo a2ensite hassaan.meetshahbaz.pk.conf >/dev/null || true
+sudo a2ensite hassaan.meetshahbaz.pk-le-ssl.conf >/dev/null || true
+sudo apache2ctl configtest
+sudo systemctl reload apache2
 
 docker compose up -d --build
 docker compose ps

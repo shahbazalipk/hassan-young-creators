@@ -2,6 +2,33 @@
 
 Search keywords: `deploy hassaan`, `deploy glimzo`, `hassaan.meetshahbaz.pk`, `future updates`
 
+## STRICT RULE
+
+**Never update live server files by hand.**
+
+Correct channel only:
+
+1. Change code/config **locally**
+2. `git commit`
+3. `git push origin main`
+4. `./scripts/deploy-glimzo.sh`
+
+Forbidden:
+
+- editing app files directly on `glimzo`
+- rsync/scp of project code for normal updates
+- patching production with nano/vim
+- touching other projects on the server (nespak, meetshahbaz, n8n, etc.)
+
+Allowed on server only via deploy script:
+
+- `git fetch/reset` from GitHub
+- `docker compose up -d --build`
+- applying Hassan Apache configs from this repo
+- reading logs / status checks
+
+`.env` stays on the server and is never committed.
+
 ## One-liner (preferred)
 
 From this repo on your Mac:
@@ -22,16 +49,6 @@ Check only:
 ./scripts/deploy-glimzo.sh --status
 ```
 
-## Manual server commands
-
-```bash
-ssh glimzo
-cd ~/hassan-portfolio
-git pull origin main
-docker compose up -d --build
-docker compose ps
-```
-
 ## Important paths
 
 | Item | Value |
@@ -44,9 +61,5 @@ docker compose ps
 | Server app dir | `~/hassan-portfolio` |
 | Env file on server | `~/hassan-portfolio/.env` |
 | Deploy script | `scripts/deploy-glimzo.sh` |
-
-## Notes
-
-- Do **not** rsync the project for normal updates — always deploy from GitHub.
-- Keep `.env` only on the server (never commit it).
-- After code changes: commit → push to `main` → run `./scripts/deploy-glimzo.sh`
+| Apache HTTP config | `deploy/apache-hassaan.meetshahbaz.pk.conf` |
+| Apache SSL config | `deploy/apache-hassaan.meetshahbaz.pk-le-ssl.conf` |
