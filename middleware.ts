@@ -3,7 +3,24 @@ import type { NextRequest } from "next/server";
 import { getIronSession } from "iron-session";
 import type { SessionData } from "@/lib/auth";
 
+function rewriteIntegratedApp(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (pathname === "/kidmind-ai" || pathname === "/kidmind-ai/") {
+    return NextResponse.rewrite(new URL("/kidmind-ai/index.html", request.url));
+  }
+
+  if (pathname === "/flash-cards" || pathname === "/flash-cards/") {
+    return NextResponse.rewrite(new URL("/flash-cards/index.html", request.url));
+  }
+
+  return null;
+}
+
 export async function middleware(request: NextRequest) {
+  const integrated = rewriteIntegratedApp(request);
+  if (integrated) return integrated;
+
   const { pathname } = request.nextUrl;
 
   if (!pathname.startsWith("/admin")) {
@@ -53,5 +70,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/kidmind-ai",
+    "/kidmind-ai/",
+    "/flash-cards",
+    "/flash-cards/",
+  ],
 };
