@@ -15,7 +15,10 @@
     "db:setup": "prisma db push && tsx prisma/seed.ts",
     "test": "playwright test",
     "test:e2e": "playwright test",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "deploy:glimzo": "./scripts/deploy-glimzo.sh",
+    "deploy:glimzo:push": "./scripts/deploy-glimzo.sh --push",
+    "deploy:glimzo:status": "./scripts/deploy-glimzo.sh --status"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",
