@@ -69,73 +69,89 @@ function RegisterForm() {
   }
 
   if (checking) {
-    return <p className="p-8 text-center">Checking your session…</p>;
+    return (
+      <div className="auth-register-page">
+        <p className="p-8 text-center text-slate-700">Checking your session…</p>
+      </div>
+    );
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6 p-6">
-      <header>
-        <h1 className="text-2xl font-bold">Create account</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Password: at least 10 characters with a letter and a number. Signup always creates a
-          regular user — never an administrator.
+    <div className="auth-register-page">
+      <div className="auth-register-inner mx-auto w-full max-w-md space-y-6 p-4 sm:p-6">
+        <header>
+          <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">Create account</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Password: at least 10 characters with a letter and a number. Signup always creates a
+            regular user — never an administrator.
+          </p>
+        </header>
+        <form onSubmit={onSubmit} className="auth-register-card space-y-4 rounded-2xl border border-sky-200 bg-white/90 p-5 shadow-sm">
+          <label className="block text-sm font-medium text-slate-700">
+            Display name
+            <input
+              className="auth-register-input mt-1 w-full rounded-lg border border-sky-200 bg-white px-3 py-2.5 text-base"
+              required
+              minLength={2}
+              maxLength={60}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              autoComplete="nickname"
+            />
+          </label>
+          <label className="block text-sm font-medium text-slate-700">
+            Email
+            <input
+              className="auth-register-input mt-1 w-full rounded-lg border border-sky-200 bg-white px-3 py-2.5 text-base"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              inputMode="email"
+            />
+          </label>
+          <label className="block text-sm font-medium text-slate-700">
+            Password
+            <input
+              className="auth-register-input mt-1 w-full rounded-lg border border-sky-200 bg-white px-3 py-2.5 text-base"
+              type="password"
+              required
+              minLength={10}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+          </label>
+          {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
+          <button
+            type="submit"
+            disabled={busy}
+            className="w-full rounded-xl bg-sky-600 px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+          >
+            {busy ? "Creating…" : "Create account"}
+          </button>
+        </form>
+        <p className="text-center text-sm text-slate-700">
+          Already have an account?{" "}
+          <Link className="font-semibold text-sky-700 underline" href={`/login?next=${encodeURIComponent(next)}`}>
+            Sign in
+          </Link>
         </p>
-      </header>
-      <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border bg-white p-5 shadow-sm">
-        <label className="block text-sm font-medium">
-          Display name
-          <input
-            className="mt-1 w-full rounded-lg border px-3 py-2"
-            required
-            minLength={2}
-            maxLength={60}
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-          />
-        </label>
-        <label className="block text-sm font-medium">
-          Email
-          <input
-            className="mt-1 w-full rounded-lg border px-3 py-2"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
-        <label className="block text-sm font-medium">
-          Password
-          <input
-            className="mt-1 w-full rounded-lg border px-3 py-2"
-            type="password"
-            required
-            minLength={10}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full rounded-xl bg-indigo-600 px-4 py-2.5 font-semibold text-white disabled:opacity-60"
-        >
-          {busy ? "Creating…" : "Create account"}
-        </button>
-      </form>
-      <p className="text-center text-sm">
-        Already have an account?{" "}
-        <Link className="text-indigo-600 underline" href={`/login?next=${encodeURIComponent(next)}`}>
-          Sign in
-        </Link>
-      </p>
+      </div>
     </div>
   );
 }
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<p className="p-8 text-center">Loading…</p>}>
+    <Suspense
+      fallback={
+        <div className="auth-register-page">
+          <p className="p-8 text-center text-slate-700">Loading…</p>
+        </div>
+      }
+    >
       <RegisterForm />
     </Suspense>
   );

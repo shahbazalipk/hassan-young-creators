@@ -317,3 +317,54 @@
     transition: none;
   }
 }
+
+/* Create Account page — light blue theme, red typed text (all devices) */
+.auth-register-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  background: #dff1ff; /* light blue */
+  color: #0f172a;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1.25rem 0 2.5rem;
+  box-sizing: border-box;
+}
+
+.auth-register-card {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.auth-register-input,
+.auth-register-input:focus,
+.auth-register-input:active,
+.auth-register-input:hover {
+  color: #dc2626 !important; /* red typed text */
+  caret-color: #dc2626;
+  -webkit-text-fill-color: #dc2626;
+  font-size: 16px; /* prevents iOS zoom; readable on phones */
+}
+
+.auth-register-input::placeholder {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8;
+  opacity: 1;
+}
+
+/* Keep red text after browser autofill (Chrome / Safari / mobile) */
+.auth-register-input:-webkit-autofill,
+.auth-register-input:-webkit-autofill:hover,
+.auth-register-input:-webkit-autofill:focus,
+.auth-register-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #dc2626 !important;
+  caret-color: #dc2626;
+  transition: background-color 99999s ease-in-out 0s;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+}
+
+@media (max-width: 640px) {
+  .auth-register-page {
+    padding: 0.75rem 0 2rem;
+  }
+}
