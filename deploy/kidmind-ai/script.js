@@ -197,15 +197,12 @@
 
   function isAdminEmail(email) {
     if (!email || typeof AdminSession === "undefined") return false;
-    return AdminSession.isOwnerEmail(email);
+    return AdminSession.isOwnerAdmin() && AdminSession.isOwnerEmail(email);
   }
 
+  /** Escalation removed — admin role is server-assigned only. */
   function ensureOwnerAdminSession() {
-    if (typeof AdminSession === "undefined" || !QuizSession.isLoggedIn()) return;
-    if (AdminSession.isOwnerAdmin()) return;
-    var parentEmail = QuizSession.getParentEmail();
-    if (!isAdminEmail(parentEmail)) return;
-    AdminSession.ensureOwnerSession(parentEmail);
+    return;
   }
 
   function hasPersistedSession() {
@@ -379,33 +376,85 @@
   }
 
   function tryAdminLogin(email, password, startQuizAfter) {
-    if (!isAdminEmail(email)) return false;
-    var result = AdminSession.login(email, password);
-    if (result.success) {
-      AdminSession.ensureOwnerSession(email);
-      AppFallback.hideError();
-
-      if (typeof RouteGuard !== "undefined" && RouteGuard.isStudentAppRoute()
-        && !RouteGuard.isAdminQuizTestEntry()) {
-        RouteGuard.redirectToAdminDashboard("Admin login on student app — opening Admin Panel");
-        return true;
-      }
-
-      ensureAdminTestModeFromUrl();
-      var profile = {
-        studentName: pendingStudent.name || AdminSession.DEFAULT_ADMIN.name,
-        age: pendingStudent.age || 10,
-        language: currentLanguage,
-        questionCount: pendingStudent.questionCount || 10
-      };
-      completeStudentAuth(email, password, profile, !!startQuizAfter);
+    // Never compare admin passwords in the browser. Admins use /admin/login.
+    void password;
+    void startQuizAfter;
+    if (typeof AdminSession !== "undefined" && AdminSession.isOwnerAdmin()) {
+      window.location.href = "/admin";
       return true;
     }
-    AppFallback.showError("Invalid admin credentials. Access denied.");
-    return true;
+    return false;
   }
 
-  function handleSignInSubmit(email, password) {
+  function applySharedUserSession(user, profile, startQuizAfter) {
+    var studentName = (profile && profile.studentName) || user.displayName || "Student";
+    var age = (profile && profile.age) || pendingStudent.age || 10;
+    var language = (profile && profile.language) || currentLanguage;
+    var questionCount = (profile && profile.questionCount) || pendingStudent.questionCount || 10;
+    QuizSession.createSession(studentName, age, user.email, language, questionCount, {
+      originalAge: age,
+      ageRecordedAt: new Date().toISOString(),
+      sharedUid: user.uid
+    });
+    AppFallback.hideError();
+    updateTopbar();
+    renderSharedAuthBar(user);
+    if (startQuizAfter) {
+      startNewQuizWithCount(questionCount);
+    } else {
+      showDashboardScreen();
+    }
+  }
+
+  function renderSharedAuthBar(user) {
+    var bar = document.getElementById("shared-auth-bar");
+    if (!bar) return;
+    bar.hidden = false;
+    if (user) {
+      bar.innerHTML =
+        '<span>Signed in as <strong>' +
+        (user.displayName || user.email) +
+        "</strong></span> " +
+        '<button type="button" id="btn-shared-logout" class="btn-ghost">Sign out (all sites)</button>';
+      var btn = document.getElementById("btn-shared-logout");
+      if (btn) {
+        btn.addEventListener("click", function () {
+          if (typeof HassanSharedAuth !== "undefined") {
+            HassanSharedAuth.logout().then(function () {
+              QuizSession.clearSession();
+              window.location.href = "/kidmind-ai";
+            });
+          }
+        });
+      }
+    } else {
+      bar.innerHTML =
+        '<a class="btn-ghost" href="/login?next=' +
+        encodeURIComponent("/kidmind-ai") +
+        '">Shared sign in</a> ' +
+        '<a class="btn-ghost" href="/register?next=' +
+        encodeURIComponent("/kidmind-ai") +
+        '">Create account</a>';
+    }
+  }
+
+  async function sharedRegisterOrLogin(email, password) {
+    if (typeof HassanSharedAuth === "undefined") return null;
+    var boot = await HassanSharedAuth.getSession();
+    var csrf = boot.csrfToken;
+    var reg = await HassanSharedAuth.register({
+      email: email,
+      password: password,
+      displayName: pendingStudent.name || email.split("@")[0],
+      csrfToken: csrf,
+      next: "/kidmind-ai"
+    });
+    if (reg && reg.ok && reg.user) return reg;
+    var login = await HassanSharedAuth.login(email, password, csrf || (await HassanSharedAuth.getSession()).csrfToken, "/kidmind-ai");
+    return login;
+  }
+
+  async function handleSignInSubmit(email, password) {
     if (tryAdminLogin(email, password, true)) return;
 
     var profile = {
@@ -421,18 +470,62 @@
       return;
     }
 
+    try {
+      var shared = await sharedRegisterOrLogin(email, password);
+      if (shared && shared.ok && shared.user) {
+        if (shared.user.isAdmin) {
+          window.location.href = "/admin";
+          return;
+        }
+        applySharedUserSession(shared.user, profile, true);
+        return;
+      }
+      if (shared && shared.error) {
+        AppFallback.showError(shared.error);
+        return;
+      }
+    } catch (err) {
+      // Fall through to local AccountStore for offline resilience.
+    }
+
     completeStudentAuth(email, password, profile, true);
   }
 
-  function handleLoginSubmit(email, password) {
+  async function handleLoginSubmit(email, password) {
     if (tryAdminLogin(email, password, false)) return;
+
+    try {
+      if (typeof HassanSharedAuth !== "undefined") {
+        var boot = await HassanSharedAuth.getSession();
+        var shared = await HassanSharedAuth.login(email, password, boot.csrfToken, "/kidmind-ai");
+        if (shared && shared.ok && shared.user) {
+          if (shared.user.isAdmin) {
+            window.location.href = "/admin";
+            return;
+          }
+          applySharedUserSession(shared.user, {
+            studentName: shared.user.displayName,
+            age: pendingStudent.age || 10,
+            language: currentLanguage,
+            questionCount: 10
+          }, false);
+          return;
+        }
+        if (shared && shared.error) {
+          AppFallback.showError(shared.error);
+          return;
+        }
+      }
+    } catch (err) {
+      // Fall through to legacy local accounts.
+    }
 
     var account = typeof AccountStore !== "undefined"
       ? AccountStore.authenticate(email, password)
       : null;
 
     if (!account) {
-      AppFallback.showError("No account found. Please use Student Details to register first.");
+      AppFallback.showError("Email or password is incorrect.");
       return;
     }
 
@@ -1323,6 +1416,36 @@
     initAdminTestFromUrl();
     applyTheme();
     bindEvents();
+
+    // Shared SSO restore (same cookie as portfolio + Flash Cards)
+    var bootShared = Promise.resolve();
+    if (typeof AdminSession !== "undefined" && AdminSession.refreshFromServer) {
+      bootShared = AdminSession.refreshFromServer();
+    }
+    bootShared
+      .then(function () {
+        if (typeof HassanSharedAuth === "undefined") return null;
+        return HassanSharedAuth.getSession();
+      })
+      .then(function (shared) {
+        if (shared && shared.ok && shared.isLoggedIn && shared.user) {
+          renderSharedAuthBar(shared.user);
+          if (!hasPersistedSession()) {
+            applySharedUserSession(shared.user, {
+              studentName: shared.user.displayName,
+              age: 10,
+              language: currentLanguage,
+              questionCount: 10
+            }, false);
+          }
+        } else {
+          renderSharedAuthBar(null);
+        }
+      })
+      .catch(function () {
+        renderSharedAuthBar(null);
+      });
+
     if (hasPersistedSession()) {
       hydrateFromStoredSession();
     } else if (QuizSession.isLoggedIn() && typeof QuizSession.migrateLegacySession === "function") {

@@ -443,32 +443,63 @@ export function ageToDifficulty(age) {
   return "hard";
 }
 
-/** Prefer matching band, then spill into nearby bands if the bank is short. */
-export function selectQuestions(allQuestions, age, count) {
-  const primary = ageToDifficulty(age);
-  const order =
-    primary === "easy"
-      ? ["easy", "medium", "hard"]
-      : primary === "medium"
-        ? ["medium", "easy", "hard"]
-        : ["hard", "medium", "easy"];
+export function ageToBand(age) {
+  const n = Number(age);
+  if (n <= 7) return { id: "5-7", min: 5, max: 7, difficulty: "easy" };
+  if (n <= 10) return { id: "8-10", min: 8, max: 10, difficulty: "medium" };
+  if (n <= 13) return { id: "11-13", min: 11, max: 13, difficulty: "hard" };
+  if (n <= 17) return { id: "14-17", min: 14, max: 17, difficulty: "hard" };
+  return { id: "18+", min: 18, max: 120, difficulty: "hard" };
+}
 
-  const byDiff = { easy: [], medium: [], hard: [] };
-  for (const q of allQuestions) {
-    if (byDiff[q.difficulty]) byDiff[q.difficulty].push(q);
-  }
+/**
+ * Local fallback selector (used only if cloud quiz API is unavailable).
+ * NEVER spills to harder/older bands for younger children.
+ */
+export function selectQuestions(allQuestions, age, count, options = {}) {
+  const band = ageToBand(age);
+  const exclude = new Set(options.excludeIds || []);
+  const used = new Set();
+  // For medium ages, prefer medium only; optional lower (easy) only if still short.
+  const preferred =
+    band.difficulty === "easy"
+      ? ["easy"]
+      : band.difficulty === "medium"
+        ? ["medium", "easy"]
+        : ["hard", "medium"];
+
+  // Age-gate without hard spill: easy ages never see medium/hard.
+  const ageSafe = allQuestions.filter((q) => {
+    if (!q?.id || exclude.has(q.id)) return false;
+    if (typeof q.minAge === "number" && typeof q.maxAge === "number") {
+      return age >= q.minAge && age <= q.maxAge;
+    }
+    if (band.difficulty === "easy") return q.difficulty === "easy";
+    if (band.difficulty === "medium") return q.difficulty === "medium" || q.difficulty === "easy";
+    return q.difficulty === "hard" || q.difficulty === "medium";
+  });
 
   const picked = [];
-  for (const diff of order) {
-    const pool = shuffle([...byDiff[diff]]);
+  for (const diff of preferred) {
+    const pool = shuffle(ageSafe.filter((q) => q.difficulty === diff && !used.has(q.id)));
     for (const q of pool) {
       if (picked.length >= count) break;
+      used.add(q.id);
       picked.push(q);
     }
     if (picked.length >= count) break;
   }
 
-  return shuffle(picked).slice(0, count);
+  // Deduplicate by id (safety)
+  const unique = [];
+  const seen = new Set();
+  for (const q of shuffle(picked)) {
+    if (seen.has(q.id)) continue;
+    seen.add(q.id);
+    unique.push(q);
+    if (unique.length >= count) break;
+  }
+  return unique;
 }
 
 function shuffle(arr) {

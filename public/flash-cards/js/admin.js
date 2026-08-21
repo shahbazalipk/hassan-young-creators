@@ -1,40 +1,54 @@
 /**
- * Admin auth + question CRUD (localStorage-backed).
+ * Slash Cards admin — uses shared server auth (no hardcoded passwords).
+ * Question CRUD remains local for offline play; admin panel access requires AppUser.role ADMIN.
  */
 
+import { DEFAULT_QUESTIONS, createQuestionId } from "./questions.js";
 import {
   getCustomQuestions,
   setCustomQuestions,
   getDeletedDefaultIds,
   setDeletedDefaultIds,
-  isAdminLoggedIn,
-  setAdminLoggedIn,
 } from "./storage.js";
-import { DEFAULT_QUESTIONS, createQuestionId } from "./questions.js";
 
-/** Demo credentials for the hidden admin panel */
-export const ADMIN_CREDENTIALS = {
-  email: "admin@slashcards.com",
-  password: "Admin@123",
-};
+let adminAllowed = false;
+let cachedUser = null;
 
-export function loginAdmin(email, password) {
-  const ok =
-    email.trim().toLowerCase() === ADMIN_CREDENTIALS.email &&
-    password === ADMIN_CREDENTIALS.password;
-  if (ok) setAdminLoggedIn(true);
-  return ok;
-}
-
-export function logoutAdmin() {
-  setAdminLoggedIn(false);
+export async function refreshAdminAccess() {
+  try {
+    const data = await fetch("/api/user/auth", {
+      credentials: "same-origin",
+      cache: "no-store",
+    }).then((r) => r.json());
+    cachedUser = data.user || null;
+    adminAllowed = Boolean(data.ok && data.isLoggedIn && data.user && data.user.isAdmin);
+    return adminAllowed;
+  } catch {
+    adminAllowed = false;
+    cachedUser = null;
+    return false;
+  }
 }
 
 export function checkAdminSession() {
-  return isAdminLoggedIn();
+  return adminAllowed;
 }
 
-/** Merged question bank (defaults minus deleted + custom). */
+export function getAdminUser() {
+  return cachedUser;
+}
+
+/** @deprecated Client credential login removed — use Hassan admin / shared auth. */
+export async function loginAdmin() {
+  return refreshAdminAccess();
+}
+
+export async function logoutAdmin() {
+  await fetch("/api/user/auth", { method: "DELETE", credentials: "same-origin" });
+  adminAllowed = false;
+  cachedUser = null;
+}
+
 export function getAllQuestions() {
   const deleted = new Set(getDeletedDefaultIds());
   const defaults = DEFAULT_QUESTIONS.filter((q) => !deleted.has(q.id));
@@ -42,33 +56,32 @@ export function getAllQuestions() {
 }
 
 export function upsertQuestion(data) {
-  const customs = getCustomQuestions();
-  if (data.id && customs.some((q) => q.id === data.id)) {
-    const next = customs.map((q) => (q.id === data.id ? { ...q, ...data } : q));
-    setCustomQuestions(next);
-    return;
-  }
-
-  // Editing a default: store override as custom with same id, mark default deleted
-  if (data.id && DEFAULT_QUESTIONS.some((q) => q.id === data.id)) {
-    const deleted = new Set(getDeletedDefaultIds());
-    deleted.add(data.id);
-    setDeletedDefaultIds([...deleted]);
-    const without = customs.filter((q) => q.id !== data.id);
-    without.push({ ...data });
-    setCustomQuestions(without);
-    return;
-  }
-
+  const list = getCustomQuestions();
   const id = data.id || createQuestionId();
-  customs.push({ ...data, id });
-  setCustomQuestions(customs);
+  const next = {
+    id,
+    text: data.text,
+    options: data.options,
+    correct: data.correct,
+    difficulty: data.difficulty,
+  };
+  const idx = list.findIndex((q) => q.id === id);
+  if (idx >= 0) list[idx] = next;
+  else list.push(next);
+  setCustomQuestions(list);
+
+  // If editing a default id, soft-delete default so custom wins
+  if (DEFAULT_QUESTIONS.some((q) => q.id === id)) {
+    const deleted = new Set(getDeletedDefaultIds());
+    deleted.add(id);
+    setDeletedDefaultIds([...deleted]);
+  }
+  return next;
 }
 
 export function deleteQuestion(id) {
-  const customs = getCustomQuestions().filter((q) => q.id !== id);
-  setCustomQuestions(customs);
-
+  const custom = getCustomQuestions().filter((q) => q.id !== id);
+  setCustomQuestions(custom);
   if (DEFAULT_QUESTIONS.some((q) => q.id === id)) {
     const deleted = new Set(getDeletedDefaultIds());
     deleted.add(id);
@@ -76,50 +89,23 @@ export function deleteQuestion(id) {
   }
 }
 
-export function renderQuestionsTable(tbody, filter = "all", handlers = {}) {
+export function renderQuestionsTable(tbody, filter, { onEdit, onDelete }) {
+  const all = getAllQuestions();
+  const rows = filter && filter !== "all" ? all.filter((q) => q.difficulty === filter) : all;
   tbody.innerHTML = "";
-  let list = getAllQuestions();
-  if (filter !== "all") list = list.filter((q) => q.difficulty === filter);
-
-  if (!list.length) {
+  rows.forEach((q) => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="4">No questions found.</td>`;
-    tbody.appendChild(tr);
-    return;
-  }
-
-  list.forEach((q) => {
-    const tr = document.createElement("tr");
-    const correctLabel = `${String.fromCharCode(65 + q.correct)}. ${q.options[q.correct]}`;
-    tr.innerHTML = `
-      <td>${escapeHtml(q.text)}</td>
-      <td><span class="badge badge-${q.difficulty}">${q.difficulty}</span></td>
-      <td>${escapeHtml(correctLabel)}</td>
-      <td class="q-actions"></td>
-    `;
-    const actions = tr.querySelector(".q-actions");
-
-    const editBtn = document.createElement("button");
-    editBtn.type = "button";
-    editBtn.className = "btn btn-secondary btn-sm";
-    editBtn.textContent = "Edit";
-    editBtn.addEventListener("click", () => handlers.onEdit?.(q));
-
-    const delBtn = document.createElement("button");
-    delBtn.type = "button";
-    delBtn.className = "btn btn-ghost btn-sm";
-    delBtn.textContent = "Delete";
-    delBtn.addEventListener("click", () => handlers.onDelete?.(q));
-
-    actions.append(editBtn, delBtn);
+    tr.innerHTML = `<td>${q.difficulty}</td><td>${q.text}</td><td></td>`;
+    const actions = tr.querySelector("td:last-child");
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.textContent = "Edit";
+    edit.addEventListener("click", () => onEdit(q));
+    const del = document.createElement("button");
+    del.type = "button";
+    del.textContent = "Delete";
+    del.addEventListener("click", () => onDelete(q));
+    actions.append(edit, del);
     tbody.appendChild(tr);
   });
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }

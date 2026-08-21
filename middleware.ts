@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getIronSession } from "iron-session";
-import type { SessionData } from "@/lib/auth";
+import { AUTH_COOKIE_NAME, sanitizeNextPath, type AuthSessionData } from "@/lib/auth-shared";
 
 function rewriteIntegratedApp(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -23,6 +23,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Block direct access to static KidMind admin HTML — use portfolio /admin instead.
+  if (pathname === "/kidmind-ai/admin.html" || pathname === "/kidmind-ai/admin") {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
+
   if (!pathname.startsWith("/admin")) {
     return NextResponse.next();
   }
@@ -43,8 +48,8 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  const session = await getIronSession<SessionData>(request, response, {
-    cookieName: "hassan_admin_session",
+  const session = await getIronSession<AuthSessionData>(request, response, {
+    cookieName: AUTH_COOKIE_NAME,
     password,
     cookieOptions: {
       httpOnly: true,
@@ -54,11 +59,12 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const loggedIn = Boolean(session.isLoggedIn && session.adminId && !session.pending2FA);
+  // Middleware can only check session shape quickly; requireAdmin() re-checks DB role on pages/APIs.
+  const loggedIn = Boolean(session.isLoggedIn && session.userId && !session.pending2FA);
 
   if (!loggedIn && !isPublicAdminPath) {
     const loginUrl = new URL("/admin/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("next", sanitizeNextPath(pathname));
     return NextResponse.redirect(loginUrl);
   }
 
@@ -74,6 +80,8 @@ export const config = {
     "/admin/:path*",
     "/kidmind-ai",
     "/kidmind-ai/",
+    "/kidmind-ai/admin",
+    "/kidmind-ai/admin.html",
     "/flash-cards",
     "/flash-cards/",
   ],

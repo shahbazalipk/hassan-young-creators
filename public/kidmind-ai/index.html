@@ -72,6 +72,8 @@
 <body>
   <a id="hassan-back-to-portfolio" href="/" data-cursor="link" aria-label="Back to Hassan’s Website"><span aria-hidden="true">←</span> Back to Hassan’s Website</a>
 
+  <div id="shared-auth-bar" class="shared-auth-bar" hidden style="position:fixed;top:14px;right:14px;z-index:2147483000;display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:rgba(15,23,42,.85);color:#fff;font:600 13px/1.2 system-ui,sans-serif;"></div>
+
   <div id="app-error-banner" class="app-error-banner" hidden></div>
 
   <!-- Splash -->
@@ -400,6 +402,7 @@
     </div>
   </div>
 
+  <script src="/shared/auth-client.js"></script>
   <script src="brand.js"></script>
   <script src="data-store.js"></script>
   <script src="account-store.js"></script>

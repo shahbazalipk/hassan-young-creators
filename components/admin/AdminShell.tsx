@@ -16,6 +16,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: "📊" },
   { href: "/admin/messages", label: "Messages", icon: "✉️", badge: "messages" },
   { href: "/admin/visitor-messages", label: "Visitor Messages", icon: "💬", badge: "visitor-chat" },
+  { href: "/admin/visitors", label: "Visitors", icon: "👀" },
+  { href: "/admin/quiz-insights", label: "Quiz Insights", icon: "📈" },
   { href: "/admin/projects", label: "Projects", icon: "📁" },
   { href: "/admin/profile", label: "Hassan’s Profile", icon: "👤" },
   { href: "/admin/missions", label: "Daily Missions", icon: "🎯" },

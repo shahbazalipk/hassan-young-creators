@@ -11,6 +11,11 @@ enum Role {
   PARENT_ADMIN
 }
 
+enum AppUserRole {
+  USER
+  ADMIN
+}
+
 enum ProjectStatus {
   DRAFT
   PUBLISHED
@@ -96,6 +101,32 @@ model AdminUser {
   updatedAt             DateTime  @updatedAt
   sessions              Session[]
   activities            ActivityLog[]
+  /// Links to shared AppUser identity (same UID across portfolio / KidMind / Flash Cards).
+  appUserId             String?   @unique
+  appUser               AppUser?  @relation(fields: [appUserId], references: [id], onDelete: SetNull)
+}
+
+/// Shared account for all three same-origin websites (portfolio, KidMind, Flash Cards).
+/// `role` is server-controlled only — never accept role from the client.
+model AppUser {
+  id                  String      @id @default(cuid())
+  email               String      @unique
+  passwordHash        String?
+  displayName         String
+  role                AppUserRole @default(USER)
+  emailVerified       Boolean     @default(false)
+  googleSub           String?     @unique
+  verifyTokenHash     String?
+  verifyTokenExpiresAt DateTime?
+  resetTokenHash      String?
+  resetTokenExpiresAt DateTime?
+  failedLoginAttempts Int         @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  adminProfile        AdminUser?
+
+  @@index([role])
 }
 
 model Session {
@@ -382,4 +413,108 @@ model ActivityLog {
   summary   String
   metaJson  String       @default("{}")
   createdAt DateTime     @default(now())
+}
+
+/// Site-wide visitor analytics (signed-in Google users or anonymous IDs).
+model SiteVisitor {
+  id              String   @id @default(cuid())
+  /// Persistent anonymous browser ID (UUID) OR Google subject (`sub`).
+  visitorKey      String   @unique
+  isAnonymous     Boolean  @default(true)
+  googleSub       String?  @unique
+  displayName     String   @default("Anonymous Visitor")
+  email           String?
+  photoUrl        String?
+  firstVisitAt    DateTime @default(now())
+  lastVisitAt     DateTime @default(now())
+  visitCount      Int      @default(1)
+  authStatus      String   @default("anonymous") // anonymous | signed_in
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([lastVisitAt])
+  @@index([isAnonymous, lastVisitAt])
+}
+
+/// Curated/generated quiz questions (Flash Cards + future apps).
+model QuizQuestion {
+  id             String   @id @default(cuid())
+  /// Stable public ID used by clients (e.g. e1, m3, generated hash).
+  publicId       String   @unique
+  app            String   @default("flash-cards")
+  text           String
+  optionsJson    String
+  correctIndex   Int
+  minAge         Int
+  maxAge         Int
+  difficulty     String
+  category       String   @default("general")
+  language       String   @default("en")
+  source         String   @default("curated") // curated | template | generated
+  contentHash    String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([app, isActive, minAge, maxAge])
+  @@index([app, contentHash])
+  @@index([app, difficulty, isActive])
+}
+
+/// Server-issued quiz attempt (prevents trusting client scores).
+model QuizSession {
+  id              String    @id @default(cuid())
+  app             String    @default("flash-cards")
+  playerKey       String
+  displayName     String
+  age             Int
+  ageBand         String
+  questionIdsJson String
+  answersJson     String    @default("[]")
+  totalQuestions  Int
+  correctCount    Int       @default(0)
+  scorePercent    Int       @default(0)
+  durationMs      Int?
+  status          String    @default("active") // active | submitted | abandoned
+  submittedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  leaderboardEntry LeaderboardEntry?
+
+  @@index([app, playerKey, createdAt])
+  @@index([status, createdAt])
+}
+
+model LeaderboardEntry {
+  id             String      @id @default(cuid())
+  app            String      @default("flash-cards")
+  sessionId      String      @unique
+  session        QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  playerKey      String
+  displayName    String
+  age            Int?
+  ageBand        String?
+  score          Int
+  correctCount   Int
+  totalQuestions Int
+  scorePercent   Int
+  category       String      @default("flash-cards")
+  durationMs     Int?
+  completedAt    DateTime    @default(now())
+  createdAt      DateTime    @default(now())
+
+  @@index([app, scorePercent, correctCount, durationMs, completedAt])
+  @@index([app, completedAt])
+}
+
+/// Recently seen questions per player (reduce immediate repeats across sessions).
+model QuestionHistory {
+  id         String   @id @default(cuid())
+  app        String   @default("flash-cards")
+  playerKey  String
+  questionId String
+  seenAt     DateTime @default(now())
+
+  @@unique([app, playerKey, questionId])
+  @@index([app, playerKey, seenAt])
 }

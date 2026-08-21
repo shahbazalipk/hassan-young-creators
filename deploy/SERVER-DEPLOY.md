@@ -63,3 +63,56 @@ Check only:
 | Deploy script | `scripts/deploy-glimzo.sh` |
 | Apache HTTP config | `deploy/apache-hassaan.meetshahbaz.pk.conf` |
 | Apache SSL config | `deploy/apache-hassaan.meetshahbaz.pk-le-ssl.conf` |
+| Admin Visitors | `https://hassaan.meetshahbaz.pk/admin/visitors` |
+| Admin Quiz Insights | `https://hassaan.meetshahbaz.pk/admin/quiz-insights` |
+
+## Shared authentication (same-origin SSO)
+
+The three “websites” are **same origin** (path-based), not separate domains:
+
+| Site | URL |
+|---|---|
+| Portfolio | `https://hassaan.meetshahbaz.pk/` |
+| KidMind AI | `https://hassaan.meetshahbaz.pk/kidmind-ai` |
+| Flash Cards | `https://hassaan.meetshahbaz.pk/flash-cards` |
+
+Shared login uses one HTTP-only iron-session cookie: `hassan_auth_session` (`path=/`).
+
+### Designate the initial administrator (no password in git)
+
+On the server `.env` only:
+
+```bash
+ADMIN_EMAIL="your-real-admin@email.com"
+ADMIN_PASSWORD="a-long-random-password"
+ADMIN_NAME="Hassan's Parent"
+```
+
+Redeploy (seed upserts `AppUser` with `role=ADMIN`). Never put these values in frontend code or `NEXT_PUBLIC_*` variables.
+
+Regular signup always creates `role=USER`.
+
+This is **not** Firebase — no Firebase Console steps.
+
+
+On container start, `scripts/start-production.mjs` runs:
+
+- `prisma db push`
+- `prisma/seed.ts`
+- `scripts/seed-flash-questions.ts` (curated Flash Cards bank + age metadata)
+
+### Optional Google Sign-In (manual)
+
+1. Google Cloud Console → APIs & Services → Credentials → Create **OAuth 2.0 Client ID** (Web).
+2. Authorized JavaScript origins: `https://hassaan.meetshahbaz.pk`
+3. Authorized redirect URIs: `https://hassaan.meetshahbaz.pk` (GIS popup/token flow).
+4. On the server `.env` add:
+
+```bash
+GOOGLE_CLIENT_ID="your-web-client-id.apps.googleusercontent.com"
+NEXT_PUBLIC_GOOGLE_CLIENT_ID="your-web-client-id.apps.googleusercontent.com"
+```
+
+5. Redeploy so the container picks up env (`./scripts/deploy-glimzo.sh`).
+
+No Firebase project, Firestore rules, or service-account keys are required for this portfolio.

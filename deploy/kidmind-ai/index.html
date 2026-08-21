@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base href="/kidmind-ai/">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KidMind AI — Smart Learning for Kids</title>
@@ -25,8 +26,54 @@
   <link rel="stylesheet" href="brand.css">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="report.css">
+
+  <style id="hassan-portfolio-back-style">
+    #hassan-back-to-portfolio {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2147483000;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.55);
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: #fff !important;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-decoration: none !important;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.28);
+      backdrop-filter: blur(8px);
+    }
+    #hassan-back-to-portfolio:hover,
+    #hassan-back-to-portfolio:focus-visible {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+      outline: none;
+    }
+    #hassan-back-to-portfolio span[aria-hidden="true"] {
+      font-size: 16px;
+    }
+    @media (max-width: 640px) {
+      #hassan-back-to-portfolio {
+        top: 10px;
+        left: 10px;
+        padding: 9px 12px;
+        font-size: 13px;
+      }
+    }
+  </style>
+
 </head>
 <body>
+  <a id="hassan-back-to-portfolio" href="/" data-cursor="link" aria-label="Back to Hassan’s Website"><span aria-hidden="true">←</span> Back to Hassan’s Website</a>
+
+  <div id="shared-auth-bar" class="shared-auth-bar" hidden style="position:fixed;top:14px;right:14px;z-index:2147483000;display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:rgba(15,23,42,.85);color:#fff;font:600 13px/1.2 system-ui,sans-serif;"></div>
+
   <div id="app-error-banner" class="app-error-banner" hidden></div>
 
   <!-- Splash -->
@@ -355,6 +402,7 @@
     </div>
   </div>
 
+  <script src="/shared/auth-client.js"></script>
   <script src="brand.js"></script>
   <script src="data-store.js"></script>
   <script src="account-store.js"></script>

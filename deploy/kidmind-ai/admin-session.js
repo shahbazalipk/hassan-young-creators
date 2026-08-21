@@ -1,171 +1,131 @@
-/** Admin authentication session */
+/** Admin authentication — shared Hassan server session (no hardcoded passwords). */
 var AdminSession = (function () {
-  var STORAGE_KEY = "admin_session";
-  var DEFAULT_ADMIN = {
-    email: "admin@kidmind.ai",
-    password: "HASSAAN@2026",
-    role: AdminRBAC.ROLES.SUPER_ADMIN,
-    name: "HASSAAN"
+  var cached = {
+    ready: false,
+    isAdmin: false,
+    user: null,
+    csrfToken: null,
   };
-
-  function getSession() {
-    return DataStore.get(STORAGE_KEY, null);
-  }
-
-  function saveSession(data) {
-    return DataStore.set(STORAGE_KEY, data);
-  }
-
-  function clearSession() {
-    return DataStore.remove(STORAGE_KEY);
-  }
 
   function normalizeEmail(email) {
     return String(email || "").trim().toLowerCase();
   }
 
-  function isDefaultOwnerEmail(email) {
-    return normalizeEmail(email) === normalizeEmail(DEFAULT_ADMIN.email);
-  }
-
-  function getOwnerEmail() {
-    if (typeof AdminCredentials !== "undefined") {
-      return AdminCredentials.getCredentials().email;
+  async function refreshFromServer() {
+    try {
+      var data = await fetch("/api/user/auth", {
+        credentials: "same-origin",
+        cache: "no-store",
+      }).then(function (r) {
+        return r.json();
+      });
+      cached.ready = true;
+      cached.csrfToken = data.csrfToken || null;
+      cached.user = data.user || null;
+      cached.isAdmin = !!(data.ok && data.isLoggedIn && data.user && data.user.isAdmin);
+      return cached.isAdmin;
+    } catch (e) {
+      cached.ready = true;
+      cached.isAdmin = false;
+      cached.user = null;
+      return false;
     }
-    return DEFAULT_ADMIN.email;
-  }
-
-  function ownerRole() {
-    return typeof AdminCredentials !== "undefined"
-      ? AdminCredentials.getCredentials().role
-      : DEFAULT_ADMIN.role;
-  }
-
-  function isOwnerEmail(email) {
-    if (isDefaultOwnerEmail(email)) return true;
-    if (typeof AdminCredentials !== "undefined") {
-      return AdminCredentials.isOwnerEmail(email);
-    }
-    return isDefaultOwnerEmail(email);
   }
 
   function isLoggedIn() {
-    var s = getSession();
-    if (!s || !s.email || !s.token) return false;
-    if (s.ownerOnly && s.role === ownerRole()) return true;
-    return isOwnerEmail(s.email);
+    return cached.isAdmin;
   }
 
   function isOwnerAdmin() {
-    var s = getSession();
-    if (!s || !s.token) return false;
-    if (s.ownerOnly && s.role === ownerRole()) return true;
-    return isOwnerEmail(s.email) && s.role === ownerRole();
+    return cached.isAdmin;
   }
 
-  function verifyLoginPassword(password, email) {
-    if (typeof AdminCredentials !== "undefined") {
-      if (AdminCredentials.verifyPassword(password, email)) return true;
+  /** Removed: never escalate parent email to admin in the browser. */
+  function ensureOwnerSession() {
+    return false;
+  }
+
+  function verifyLoginPassword() {
+    return false;
+  }
+
+  function login() {
+    // Client-side password login removed. Use portfolio admin login.
+    window.location.href = "/admin/login?next=" + encodeURIComponent("/admin");
+    return false;
+  }
+
+  async function logout() {
+    try {
+      await fetch("/api/user/auth", { method: "DELETE", credentials: "same-origin" });
+    } catch (e) {
+      /* ignore */
     }
-    return password === DEFAULT_ADMIN.password;
-  }
-
-  function ensureOwnerSession(email) {
-    var creds = typeof AdminCredentials !== "undefined"
-      ? AdminCredentials.getCredentials()
-      : DEFAULT_ADMIN;
-    var sessionEmail = email || creds.email || DEFAULT_ADMIN.email;
-    var existing = getSession();
-    var session = {
-      email: sessionEmail,
-      name: creds.name || DEFAULT_ADMIN.name,
-      role: creds.role || DEFAULT_ADMIN.role,
-      token: existing && existing.token ? existing.token : "admin_" + Date.now(),
-      loggedInAt: existing && existing.loggedInAt ? existing.loggedInAt : new Date().toISOString(),
-      testMode: existing ? !!existing.testMode : false,
-      ownerOnly: true
-    };
-    saveSession(session);
-    return session;
-  }
-
-  function login(email, password) {
-    var normalizedEmail = normalizeEmail(email);
-    if (!isOwnerEmail(normalizedEmail)) {
-      return { success: false, error: "Access denied. Admin panel is owner-only." };
-    }
-    if (!verifyLoginPassword(password, normalizedEmail)) {
-      return { success: false, error: "Invalid credentials" };
-    }
-    var creds = typeof AdminCredentials !== "undefined"
-      ? AdminCredentials.getCredentials()
-      : DEFAULT_ADMIN;
-    var session = {
-      email: creds.email,
-      name: creds.name || DEFAULT_ADMIN.name,
-      role: creds.role || DEFAULT_ADMIN.role,
-      token: "admin_" + Date.now(),
-      loggedInAt: new Date().toISOString(),
-      testMode: false,
-      ownerOnly: true
-    };
-    saveSession(session);
-    return { success: true, session: session };
-  }
-
-  function updateSessionEmail(email) {
-    var s = getSession();
-    if (!s) return false;
-    s.email = String(email || "").trim();
-    saveSession(s);
+    cached.isAdmin = false;
+    cached.user = null;
     return true;
   }
 
-  function logout() {
-    clearSession();
+  function getSession() {
+    if (!cached.isAdmin || !cached.user) return null;
+    return {
+      email: cached.user.email,
+      name: cached.user.displayName,
+      role: "ADMIN",
+      token: "server-session",
+      ownerOnly: true,
+    };
+  }
+
+  function getOwnerEmail() {
+    return cached.user && cached.user.email ? cached.user.email : "";
+  }
+
+  function isOwnerEmail(email) {
+    if (!cached.user) return false;
+    return normalizeEmail(email) === normalizeEmail(cached.user.email);
+  }
+
+  function hasPermission() {
+    return cached.isAdmin;
+  }
+
+  function setTestMode() {
+    return false;
   }
 
   function isTestMode() {
-    var s = getSession();
-    return !!(s && s.testMode);
+    return false;
   }
 
-  function setTestMode(enabled) {
-    var s = getSession();
-    if (!s) return false;
-    s.testMode = !!enabled;
-    saveSession(s);
-    return true;
-  }
+  // Compatibility stubs (no secrets).
+  var DEFAULT_ADMIN = {
+    email: "",
+    password: "",
+    name: "Administrator",
+    role: "ADMIN",
+  };
 
-  function getRole() {
-    var s = getSession();
-    return s ? s.role : null;
-  }
-
-  function hasPermission(permission) {
-    var role = getRole();
-    if (!role) return false;
-    return AdminRBAC.hasPermission(role, permission);
-  }
+  // Kick off session restore immediately so sync checks work after await points.
+  refreshFromServer();
 
   return {
     DEFAULT_ADMIN: DEFAULT_ADMIN,
-    getSession: getSession,
-    saveSession: saveSession,
-    clearSession: clearSession,
+    refreshFromServer: refreshFromServer,
     isLoggedIn: isLoggedIn,
+    isOwnerAdmin: isOwnerAdmin,
+    ensureOwnerSession: ensureOwnerSession,
+    verifyLoginPassword: verifyLoginPassword,
     login: login,
     logout: logout,
-    isTestMode: isTestMode,
-    setTestMode: setTestMode,
-    getRole: getRole,
-    hasPermission: hasPermission,
-    isOwnerEmail: isOwnerEmail,
-    isOwnerAdmin: isOwnerAdmin,
-    updateSessionEmail: updateSessionEmail,
+    getSession: getSession,
     getOwnerEmail: getOwnerEmail,
-    ensureOwnerSession: ensureOwnerSession,
-    isDefaultOwnerEmail: isDefaultOwnerEmail
+    isOwnerEmail: isOwnerEmail,
+    isTestMode: isTestMode,
+    hasPermission: hasPermission,
+    setTestMode: setTestMode,
+    isReady: function () {
+      return cached.ready;
+    },
   };
 })();

@@ -326,46 +326,20 @@
   }
 
   function renderAdminCredentials(el) {
-    if (!el || typeof AdminSession === "undefined") return;
-    var admin = AdminSession.DEFAULT_ADMIN;
-    var base = window.location.origin + window.location.pathname.replace(/admin\.html.*$/, "");
-    var dashboardUrl = base + "admin.html";
-    var loginUrl = base + "index.html";
-    el.innerHTML =
-      "<p><strong>Admin Name:</strong> <code>" + escapeHtml(admin.name) + "</code></p>" +
-      "<p><strong>Admin Email:</strong> <code>" + escapeHtml(admin.email) + "</code></p>" +
-      "<p><strong>Admin Password:</strong> <code>" + escapeHtml(admin.password) + "</code></p>" +
-      "<p><strong>Admin Role:</strong> <code>" + escapeHtml(admin.role) + "</code></p>" +
-      "<p><strong>Admin Dashboard URL:</strong> <code>" + escapeHtml(dashboardUrl) + "</code></p>" +
-      "<p><strong>Login URL:</strong> <code>" + escapeHtml(loginUrl) + "</code></p>";
-    if (typeof console !== "undefined" && window.location.hostname === "localhost") {
-      console.log("KidMind AI Admin Credentials:", {
-        name: admin.name,
-        email: admin.email,
-        password: admin.password,
-        role: admin.role,
-        dashboardUrl: dashboardUrl,
-        loginUrl: loginUrl
-      });
+    if (!el) return;
+    if (typeof AdminCredentials !== "undefined" && AdminCredentials.renderDisplay) {
+      AdminCredentials.renderDisplay(el);
+      return;
     }
+    el.innerHTML =
+      '<p>Admin passwords are never shown in the browser.</p>' +
+      '<p><a href="/admin/login?next=/admin">Open secure Hassan admin login</a></p>';
   }
 
   if (loginForm) {
     loginForm.addEventListener("submit", function (e) {
       e.preventDefault();
-      var email = document.getElementById("admin-email").value.trim();
-      var password = document.getElementById("admin-password").value;
-      if (typeof Security !== "undefined" && !Security.isValidEmail(email)) {
-        showError("Please enter a valid email address.");
-        return;
-      }
-      var result = AdminSession.login(email, password);
-      if (result.success) {
-        showError("");
-        showDashboard();
-      } else {
-        showError(result.error || "Login failed");
-      }
+      window.location.href = "/admin/login?next=" + encodeURIComponent("/admin");
     });
   }
 
@@ -506,15 +480,21 @@
     });
   }
 
-  if (AdminSession.isOwnerAdmin()) {
-    if (typeof RouteGuard !== "undefined") {
-      RouteGuard.logRouteGuard("Admin panel init — restoring dashboard");
+  async function bootAdminUi() {
+    if (typeof AdminSession !== "undefined" && AdminSession.refreshFromServer) {
+      await AdminSession.refreshFromServer();
     }
-    showDashboard();
-  } else {
-    if (typeof RouteGuard !== "undefined") {
-      RouteGuard.logRouteGuard("Admin panel init — show login");
+    if (AdminSession.isOwnerAdmin()) {
+      if (typeof RouteGuard !== "undefined") {
+        RouteGuard.logRouteGuard("Admin panel init — restoring dashboard");
+      }
+      showDashboard();
+    } else {
+      if (typeof RouteGuard !== "undefined") {
+        RouteGuard.logRouteGuard("Admin panel init — show login");
+      }
+      showLogin();
     }
-    showLogin();
   }
+  bootAdminUi();
 })();

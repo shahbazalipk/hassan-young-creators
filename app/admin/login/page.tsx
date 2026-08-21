@@ -10,9 +10,10 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [requires2FA, setRequires2FA] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   async function loadAuthBootstrap() {
-    const res = await fetch("/api/auth", { cache: "no-store" });
+    const res = await fetch("/api/auth", { cache: "no-store", credentials: "same-origin" });
     if (!res.ok) {
       throw new Error("Could not initialize secure login.");
     }
@@ -21,13 +22,18 @@ function LoginForm() {
       throw new Error("Could not initialize secure login.");
     }
     setCsrfToken(data.csrfToken);
-    if (data.isLoggedIn) router.replace("/admin");
+    if (data.isLoggedIn) {
+      const next = params.get("next") || "/admin";
+      router.replace(next.startsWith("/") ? next : "/admin");
+    }
     if (data.pending2FA) setRequires2FA(true);
     return data.csrfToken as string;
   }
 
   useEffect(() => {
-    loadAuthBootstrap().catch(() => setError("Could not initialize secure login. Please refresh the page."));
+    loadAuthBootstrap()
+      .catch(() => setError("Could not initialize secure login. Please refresh the page."))
+      .finally(() => setCheckingSession(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
@@ -64,14 +70,21 @@ function LoginForm() {
         return;
       }
       // Hard navigation refreshes server components (including public nav auth state).
-      window.location.assign(params.get("next") || "/admin");
+      const nextRaw = params.get("next") || "/admin";
+      const next = nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/admin";
+      window.location.assign(next);
     } catch {
       setError("Network error. Please refresh and try again.");
       setLoading(false);
     }
   }
 
-  return (
+  return checkingSession ? (
+    <div className="admin-card w-full max-w-md space-y-4 p-6 text-center">
+      <p className="text-lg font-semibold">Checking your session…</p>
+      <p className="text-sm text-slate-500">Please wait — we will not show the login form until this finishes.</p>
+    </div>
+  ) : (
     <form onSubmit={onSubmit} method="post" className="admin-card w-full max-w-md space-y-4 p-6">
       <div>
         <p className="text-sm uppercase tracking-[0.14em] text-blue-600">Parent / Guardian</p>

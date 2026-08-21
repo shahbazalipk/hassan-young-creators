@@ -21,14 +21,20 @@ import {
   shareWithParentsWhatsApp,
 } from "./certificate.js";
 import {
-  loginAdmin,
   logoutAdmin,
-  checkAdminSession,
+  refreshAdminAccess,
+  getAdminUser,
   getAllQuestions,
   upsertQuestion,
   deleteQuestion,
   renderQuestionsTable,
 } from "./admin.js";
+import {
+  pingVisitor,
+  fetchLeaderboard,
+  startCloudQuiz,
+  submitCloudQuiz,
+} from "./cloud.js";
 
 const SCREENS = [
   "welcome",
@@ -44,6 +50,11 @@ const state = {
   cardCount: 10,
   lastResult: null,
   fireworksInterval: null,
+  playerKey: null,
+  leaderboard: [],
+  leaderboardError: "",
+  leaderboardLoading: false,
+  googleCredential: null,
 };
 
 const fireworks = new Fireworks(document.getElementById("fireworks-canvas"));
@@ -91,14 +102,39 @@ function leaveWelcome() {
 }
 
 /* ---------- Setup ---------- */
+async function refreshCloudLeaderboard(highlightName = null) {
+  state.leaderboardLoading = true;
+  state.leaderboardError = "";
+  const targets = ["setup-leaderboard", "quiz-leaderboard", "final-leaderboard"]
+    .map((id) => $(id))
+    .filter(Boolean);
+  targets.forEach((el) => {
+    el.innerHTML = `<p class="leaderboard-empty">Loading global leaderboard…</p>`;
+  });
+  try {
+    const entries = await fetchLeaderboard(20);
+    state.leaderboard = entries;
+    targets.forEach((el) => renderLeaderboard(el, entries, highlightName));
+  } catch (err) {
+    state.leaderboardError = err?.message || "Could not load global leaderboard.";
+    // Local fallback snapshot so the UI is never blank.
+    const local = getLeaderboard();
+    targets.forEach((el) => {
+      renderLeaderboard(el, local, highlightName);
+      const note = document.createElement("p");
+      note.className = "leaderboard-empty";
+      note.textContent = "Showing local scores — global board temporarily unavailable.";
+      el.appendChild(note);
+    });
+  } finally {
+    state.leaderboardLoading = false;
+  }
+}
+
 function goToSetup(keepStudent = false) {
   showScreen("setup");
   fireworks.stop();
-  renderLeaderboard(
-    $("setup-leaderboard"),
-    getLeaderboard(),
-    keepStudent ? state.student.name : null
-  );
+  refreshCloudLeaderboard(keepStudent ? state.student.name : null);
 
   if (keepStudent && state.student.name) {
     $("student-name").value = state.student.name;
@@ -125,7 +161,7 @@ function validateSetup() {
   return ok ? { name, age } : null;
 }
 
-function startQuizFromSetup(event) {
+async function startQuizFromSetup(event) {
   event.preventDefault();
   const student = validateSetup();
   if (!student) return;
@@ -136,16 +172,9 @@ function startQuizFromSetup(event) {
   state.student = student;
   state.cardCount = cardCount;
 
-  const bank = getAllQuestions();
-  const questions = selectQuestions(bank, student.age, cardCount);
-  if (!questions.length) {
-    alert("No questions available. Ask an admin to add some!");
-    return;
-  }
-
   playClick();
   showScreen("quiz");
-  renderLeaderboard($("quiz-leaderboard"), getLeaderboard(), student.name);
+  refreshCloudLeaderboard(student.name);
 
   quiz.bindElements({
     progress: $("quiz-progress"),
@@ -161,17 +190,63 @@ function startQuizFromSetup(event) {
     card: $("slash-card"),
   });
 
-  quiz.start(student, questions);
+  try {
+    const cloud = await startCloudQuiz({
+      displayName: student.name,
+      age: student.age,
+      count: cardCount,
+      playerKey: state.playerKey,
+    });
+    state.playerKey = cloud.playerKey || state.playerKey;
+    const questions = (cloud.questions || []).map((q) => ({
+      id: q.id,
+      publicId: q.publicId,
+      text: q.text,
+      options: q.options,
+      // correct omitted on purpose — graded on server
+    }));
+    if (!questions.length) throw new Error("No age-appropriate questions returned.");
+    quiz.start(student, questions, { cloudMode: true, sessionId: cloud.sessionId });
+  } catch (err) {
+    // Offline/local fallback with age-safe selector (no harder spill).
+    const bank = getAllQuestions();
+    const questions = selectQuestions(bank, student.age, cardCount);
+    if (!questions.length) {
+      alert(err?.message || "No questions available. Ask an admin to add some!");
+      goToSetup(true);
+      return;
+    }
+    showToast("Playing offline mode — scores stay on this device until cloud is back.");
+    quiz.start(student, questions, { cloudMode: false });
+  }
 }
 
 /* ---------- Certificate ---------- */
-function finishQuiz(result) {
-  const { score, total, student } = result;
-  state.lastResult = { name: student.name, age: student.age, score, total };
+async function finishQuiz(result) {
+  const { score, total, student, answers, durationMs, sessionId, cloudMode } = result;
+  let finalScore = score;
+  let finalTotal = total;
 
-  saveScore({ name: student.name, age: student.age, score, total });
+  if (cloudMode && sessionId) {
+    try {
+      const safeAnswers = (answers || []).map((a) => ({
+        questionId: a.questionId,
+        selectedIndex: Number.isInteger(a.selectedIndex) ? a.selectedIndex : -1,
+      }));
+      const submitted = await submitCloudQuiz(sessionId, safeAnswers, durationMs);
+      finalScore = submitted.score;
+      finalTotal = submitted.total;
+    } catch (err) {
+      showToast(err?.message || "Could not sync score to global leaderboard.");
+      // Keep local score from partial client tracking (0 in cloud mode) — prefer failure message.
+    }
+  } else {
+    saveScore({ name: student.name, age: student.age, score: finalScore, total: finalTotal });
+  }
+
+  state.lastResult = { name: student.name, age: student.age, score: finalScore, total: finalTotal };
   fillCertificate(state.lastResult);
-  renderLeaderboard($("final-leaderboard"), getLeaderboard(), student.name);
+  await refreshCloudLeaderboard(student.name);
 
   showScreen("certificate");
   fireworks.start(1.4);
@@ -188,6 +263,97 @@ function showToast(msg) {
   showToast._t = setTimeout(() => {
     toast.hidden = true;
   }, 2500);
+}
+
+async function setupGoogleAuth() {
+  const box = $("google-auth-box");
+  const status = $("auth-status");
+  const signOutBtn = $("btn-google-signout");
+  if (!box) return;
+
+  try {
+    const cfg = await fetch("/api/public-config").then((r) => r.json());
+    const clientId = cfg?.googleClientId;
+    if (!cfg?.ok || !clientId) {
+      box.hidden = true;
+      return;
+    }
+    box.hidden = false;
+    if (cfg.privacyNote && status) status.textContent = cfg.privacyNote;
+
+    await new Promise((resolve, reject) => {
+      if (window.google?.accounts?.id) {
+        resolve();
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = "https://accounts.google.com/gsi/client";
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error("Google script failed"));
+      document.head.appendChild(s);
+    });
+
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: async (response) => {
+        state.googleCredential = response.credential;
+        // Shared account session (same UID across all three sites)
+        const csrfData = await fetch("/api/user/auth", {
+          credentials: "same-origin",
+        }).then((r) => r.json());
+        const auth = await fetch("/api/user/auth", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "google",
+            googleIdToken: response.credential,
+            csrfToken: csrfData.csrfToken,
+            next: "/flash-cards",
+          }),
+        }).then((r) => r.json());
+        if (auth?.ok && auth.user) {
+          state.playerKey = `user:${auth.user.uid}`;
+          state.authUser = auth.user;
+          if (status) status.textContent = `Signed in as ${auth.user.displayName}.`;
+          if (signOutBtn) signOutBtn.hidden = false;
+          if ($("student-name") && !$("student-name").value) {
+            $("student-name").value = auth.user.displayName.slice(0, 40);
+          }
+          return;
+        }
+        // Fallback: visitor analytics only
+        const ping = await pingVisitor(response.credential);
+        if (ping?.ok) {
+          state.playerKey = ping.visitor?.playerKey || state.playerKey;
+          if (status) {
+            status.textContent = `Signed in as ${ping.visitor?.displayName || "Google user"}.`;
+          }
+          if (signOutBtn) signOutBtn.hidden = false;
+        }
+      },
+    });
+
+    window.google.accounts.id.renderButton($("google-signin-btn"), {
+      theme: "outline",
+      size: "large",
+      text: "signin_with",
+      shape: "pill",
+    });
+
+    signOutBtn?.addEventListener("click", () => {
+      state.googleCredential = null;
+      window.google?.accounts?.id?.disableAutoSelect?.();
+      if (signOutBtn) signOutBtn.hidden = true;
+      if (status) status.textContent = "Signed out. Playing as guest (anonymous visitor ID).";
+      pingVisitor().then((data) => {
+        if (data?.ok) state.playerKey = data.visitor?.playerKey || state.playerKey;
+      });
+    });
+  } catch {
+    if (box) box.hidden = true;
+  }
 }
 
 async function onSaveCertificate() {
@@ -223,29 +389,34 @@ function onContinue() {
   showScreen("setup");
   $("student-name").value = state.student.name;
   $("student-age").value = String(state.student.age);
-  renderLeaderboard($("setup-leaderboard"), getLeaderboard(), state.student.name);
+  refreshCloudLeaderboard(state.student.name);
   showToast("Choose how many Slash Cards to play next!");
 }
 
 /* ---------- Admin ---------- */
-function openAdminLogin() {
+async function openAdminLogin() {
   quiz.stop();
   fireworks.stop();
-  if (checkAdminSession()) {
+  const ok = await refreshAdminAccess();
+  if (ok) {
     openAdminPanel();
     return;
   }
-  showScreen("admin-login");
-  $("admin-email").value = "";
-  $("admin-password").value = "";
-  $("admin-email-error").textContent = "";
-  $("admin-password-error").textContent = "";
+  // No client-side admin passwords — use shared Hassan admin login.
+  window.location.href = "/admin/login?next=" + encodeURIComponent("/flash-cards/#admin");
 }
 
 function openAdminPanel() {
   showScreen("admin");
   refreshAdminTable();
   resetQuestionForm();
+  const note = $("admin-auth-note");
+  if (note) {
+    const u = getAdminUser();
+    note.textContent = u
+      ? `Signed in as ${u.displayName} (server-verified administrator).`
+      : "Administrator access verified.";
+  }
 }
 
 function refreshAdminTable() {
@@ -284,17 +455,8 @@ function resetQuestionForm() {
 
 function onAdminLogin(event) {
   event.preventDefault();
-  $("admin-email-error").textContent = "";
-  $("admin-password-error").textContent = "";
-
-  const email = $("admin-email").value;
-  const password = $("admin-password").value;
-
-  if (!loginAdmin(email, password)) {
-    $("admin-password-error").textContent = "Invalid email or password.";
-    return;
-  }
-  openAdminPanel();
+  // Legacy form — redirect to secure shared admin login.
+  window.location.href = "/admin/login?next=" + encodeURIComponent("/flash-cards/#admin");
 }
 
 function onSaveQuestion(event) {
@@ -342,7 +504,7 @@ function handleSharedResult() {
   state.lastResult = { name, age, score, total };
   state.student = { name, age };
   fillCertificate(state.lastResult);
-  renderLeaderboard($("final-leaderboard"), getLeaderboard(), name);
+  refreshCloudLeaderboard(name);
   showScreen("certificate");
   return true;
 }
@@ -387,14 +549,55 @@ function init() {
 
   window.addEventListener("hashchange", handleHashRoute);
 
-  // Boot
-  if (handleSharedResult()) return;
-  if ((location.hash || "").toLowerCase() === "#admin") {
-    openAdminLogin();
-    return;
-  }
-  startWelcome();
-  // Soft fireworks SFX after first user interaction only (autoplay policies)
+  // Boot — restore shared session first (same cookie as portfolio + KidMind).
+  setupGoogleAuth();
+  (async () => {
+    const session = await fetch("/api/user/auth", {
+      credentials: "same-origin",
+      cache: "no-store",
+    })
+      .then((r) => r.json())
+      .catch(() => null);
+
+    if (session?.ok && session.isLoggedIn && session.user) {
+      state.playerKey = `user:${session.user.uid}`;
+      state.authUser = session.user;
+      const bar = $("shared-auth-bar");
+      if (bar) {
+        bar.hidden = false;
+        bar.innerHTML = `<span>Signed in as <strong>${session.user.displayName}</strong></span>
+          <button type="button" id="btn-shared-logout" class="btn btn-ghost">Sign out</button>`;
+        $("btn-shared-logout")?.addEventListener("click", async () => {
+          await fetch("/api/user/auth", { method: "DELETE", credentials: "same-origin" });
+          window.location.reload();
+        });
+      }
+      if ($("student-name") && !$("student-name").value) {
+        $("student-name").value = session.user.displayName.slice(0, 40);
+      }
+    } else {
+      const bar = $("shared-auth-bar");
+      if (bar) {
+        bar.hidden = false;
+        bar.innerHTML = `<a class="btn btn-ghost" href="/login?next=${encodeURIComponent("/flash-cards")}">Sign in</a>
+          <a class="btn btn-ghost" href="/register?next=${encodeURIComponent("/flash-cards")}">Create account</a>`;
+      }
+      const ping = await pingVisitor(state.googleCredential);
+      if (ping?.ok && ping.visitor?.playerKey) {
+        state.playerKey = ping.visitor.playerKey;
+      }
+    }
+
+    await refreshAdminAccess();
+
+    if (handleSharedResult()) return;
+    if ((location.hash || "").toLowerCase() === "#admin") {
+      openAdminLogin();
+      return;
+    }
+    startWelcome();
+  })();
+
   document.addEventListener(
     "pointerdown",
     () => {

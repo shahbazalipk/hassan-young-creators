@@ -5,6 +5,7 @@ import { SiteInteractions } from "@/components/public/SiteInteractions";
 import { IdeaGenerator } from "@/components/public/IdeaGenerator";
 import { ChallengeCard } from "@/components/public/ChallengeCard";
 import { VisitorMessaging } from "@/components/public/VisitorMessaging";
+import { SharedAuthNav } from "@/components/public/SharedAuthNav";
 
 type PublicData = Awaited<ReturnType<typeof import("@/lib/data").getPublicSiteData>>;
 
@@ -25,6 +26,18 @@ export function PublicSite({
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    // Record a privacy-safe visit for admin analytics (debounced server-side).
+    fetch("/api/visitors/ping", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: "{}",
+    }).catch(() => {
+      // Non-blocking analytics.
+    });
+  }, []);
 
   const profile = data.profile;
   const settings = data.settings;
@@ -94,6 +107,9 @@ export function PublicSite({
                 </a>
               </li>
             ) : null}
+            <li className="nav-auth-item">
+              <SharedAuthNav />
+            </li>
             <li>
               <a href="#projects" data-cursor="link">
                 Websites

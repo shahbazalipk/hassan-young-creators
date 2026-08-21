@@ -1,8 +1,9 @@
 /**
  * Quiz gameplay: timer, scoring, card rendering.
+ * Supports local questions (with `.correct`) and cloud questions (answers graded on server).
  */
 
-import { playCorrect, playWrong, playTimeout } from "./audio.js";
+import { playCorrect, playWrong, playTimeout, playClick } from "./audio.js";
 
 const TIMER_SECONDS = 10;
 
@@ -18,18 +19,25 @@ export class QuizEngine {
     this.secondsLeft = TIMER_SECONDS;
     this.locked = false;
     this.els = {};
+    this.answers = [];
+    this.startedAt = 0;
+    this.cloudMode = false;
   }
 
   bindElements(els) {
     this.els = els;
   }
 
-  start(student, questions) {
+  start(student, questions, options = {}) {
     this.student = student;
     this.questions = questions;
     this.index = 0;
     this.score = 0;
     this.locked = false;
+    this.answers = [];
+    this.startedAt = Date.now();
+    this.cloudMode = Boolean(options.cloudMode);
+    this.sessionId = options.sessionId || null;
     this.onScoreChange?.(this.score);
     this.showCurrent();
   }
@@ -58,7 +66,7 @@ export class QuizEngine {
     } = this.els;
 
     progress.textContent = `Card ${this.index + 1} / ${this.questions.length}`;
-    scoreEl.textContent = `Score: ${this.score}`;
+    scoreEl.textContent = this.cloudMode ? `Card progress` : `Score: ${this.score}`;
     nameEl.textContent = this.student.name;
     ageEl.textContent = `Age ${this.student.age}`;
     questionText.textContent = q.text;
@@ -75,7 +83,6 @@ export class QuizEngine {
       optionsEl.appendChild(btn);
     });
 
-    // Retrigger card entrance animation
     card.classList.remove("anim");
     void card.offsetWidth;
     card.style.animation = "none";
@@ -98,16 +105,34 @@ export class QuizEngine {
     timerWrap.classList.toggle("urgent", this.secondsLeft <= 3);
   }
 
+  recordAnswer(choiceIndex) {
+    const q = this.questions[this.index];
+    this.answers.push({
+      questionId: q.id || q.publicId,
+      selectedIndex: choiceIndex,
+    });
+  }
+
   answer(choiceIndex) {
     if (this.locked) return;
     this.locked = true;
     this.stop();
+    this.recordAnswer(choiceIndex);
 
     const q = this.questions[this.index];
     const buttons = [...this.els.optionsEl.querySelectorAll(".answer-btn")];
     buttons.forEach((b) => {
       b.disabled = true;
     });
+
+    if (this.cloudMode || typeof q.correct !== "number") {
+      buttons[choiceIndex]?.classList.add("correct");
+      this.els.feedback.textContent = "Answer locked!";
+      this.els.feedback.className = "feedback good";
+      playClick();
+      setTimeout(() => this.next(), 650);
+      return;
+    }
 
     const correct = choiceIndex === q.correct;
     buttons[q.correct]?.classList.add("correct");
@@ -133,13 +158,16 @@ export class QuizEngine {
     this.locked = true;
     this.stop();
     playTimeout();
+    this.recordAnswer(-1);
 
     const q = this.questions[this.index];
     const buttons = [...this.els.optionsEl.querySelectorAll(".answer-btn")];
     buttons.forEach((b) => {
       b.disabled = true;
     });
-    buttons[q.correct]?.classList.add("correct");
+    if (typeof q.correct === "number") {
+      buttons[q.correct]?.classList.add("correct");
+    }
     this.els.feedback.textContent = "Time's up!";
     this.els.feedback.className = "feedback bad";
     setTimeout(() => this.next(), 900);
@@ -153,6 +181,10 @@ export class QuizEngine {
         score: this.score,
         total: this.questions.length,
         student: this.student,
+        answers: this.answers,
+        durationMs: Date.now() - this.startedAt,
+        sessionId: this.sessionId,
+        cloudMode: this.cloudMode,
       });
       return;
     }

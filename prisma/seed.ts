@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, AppUserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { restoreDefaultWebsiteContent } from "../lib/admin/default-content";
 
@@ -12,14 +12,37 @@ async function main() {
 
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
+  // Shared AppUser with server-assigned ADMIN role (never from client signup).
+  const appUser = await prisma.appUser.upsert({
+    where: { email: adminEmail },
+    update: {
+      passwordHash,
+      displayName: adminName,
+      role: AppUserRole.ADMIN,
+      emailVerified: true,
+    },
+    create: {
+      email: adminEmail,
+      passwordHash,
+      displayName: adminName,
+      role: AppUserRole.ADMIN,
+      emailVerified: true,
+    },
+  });
+
   await prisma.adminUser.upsert({
     where: { email: adminEmail },
-    update: { passwordHash, name: adminName },
+    update: {
+      passwordHash,
+      name: adminName,
+      appUserId: appUser.id,
+    },
     create: {
       email: adminEmail,
       passwordHash,
       name: adminName,
       role: "PARENT_ADMIN",
+      appUserId: appUser.id,
     },
   });
 
@@ -39,14 +62,14 @@ async function main() {
     },
   });
 
-  // Keep parent email only in env; DB field stays empty unless parent opts into public display later.
   void parentEmail;
 
   const created = await restoreDefaultWebsiteContent(prisma);
 
   console.log("Seed complete.");
+  console.log(`Admin AppUser UID: ${appUser.id}`);
   console.log(`Admin login email: ${adminEmail}`);
-  console.log("Use ADMIN_PASSWORD from your .env file. Change it after first login.");
+  console.log("Use ADMIN_PASSWORD from your .env file (never commit it). Change it after first login.");
   console.log("Restored/verified default content groups:", created);
 }
 

@@ -12,7 +12,7 @@ export function jsonOk<T extends Record<string, unknown>>(data: T, status = 200)
 
 export async function requireAdminApi() {
   const auth = await requireAdmin();
-  if (!auth) return { auth: null, response: jsonError("Unauthorized", 401) };
+  if (!auth) return { auth: null, response: jsonError("Access denied", 403) };
   return { auth, response: null };
 }
 
