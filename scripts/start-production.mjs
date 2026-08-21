@@ -19,6 +19,8 @@ function run(command, args) {
 }
 
 console.log("Preparing production database...");
+// Clean duplicate emails BEFORE unique indexes are (re)applied by db push.
+run("npx", ["tsx", "scripts/cleanup-duplicate-emails.ts"]);
 run("npx", ["prisma", "db", "push", "--skip-generate"]);
 run("npx", ["tsx", "prisma/seed.ts"]);
 run("npx", ["tsx", "scripts/seed-flash-questions.ts"]);

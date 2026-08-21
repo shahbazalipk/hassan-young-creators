@@ -97,9 +97,17 @@ This is **not** Firebase — no Firebase Console steps.
 
 On container start, `scripts/start-production.mjs` runs:
 
-- `prisma db push`
-- `prisma/seed.ts`
-- `scripts/seed-flash-questions.ts` (curated Flash Cards bank + age metadata)
+1. `scripts/cleanup-duplicate-emails.ts` — merges duplicate `AppUser` / `AdminUser` emails (and blank `googleSub` conflicts) **before** unique indexes are applied
+2. `prisma db push`
+3. `prisma/seed.ts`
+4. `scripts/seed-flash-questions.ts` (curated Flash Cards bank + age metadata)
+
+Manual local cleanup:
+
+```bash
+npm run db:cleanup-emails
+npx prisma db push
+```
 
 ### Optional Google Sign-In (manual)
 

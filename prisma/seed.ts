@@ -13,39 +13,54 @@ async function main() {
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
   // Shared AppUser with server-assigned ADMIN role (never from client signup).
-  const appUser = await prisma.appUser.upsert({
-    where: { email: adminEmail },
-    update: {
-      passwordHash,
-      displayName: adminName,
-      role: AppUserRole.ADMIN,
-      emailVerified: true,
-    },
-    create: {
-      email: adminEmail,
-      passwordHash,
-      displayName: adminName,
-      role: AppUserRole.ADMIN,
-      emailVerified: true,
-    },
-  });
+  // Use find-first + update/create to avoid unique-constraint races on email.
+  const existingApp = await prisma.appUser.findUnique({ where: { email: adminEmail } });
+  const appUser = existingApp
+    ? await prisma.appUser.update({
+        where: { id: existingApp.id },
+        data: {
+          passwordHash,
+          displayName: adminName,
+          role: AppUserRole.ADMIN,
+          emailVerified: true,
+        },
+      })
+    : await prisma.appUser.create({
+        data: {
+          email: adminEmail,
+          passwordHash,
+          displayName: adminName,
+          role: AppUserRole.ADMIN,
+          emailVerified: true,
+        },
+      });
 
-  await prisma.adminUser.upsert({
-    where: { email: adminEmail },
-    update: {
-      passwordHash,
-      name: adminName,
-      appUserId: appUser.id,
-    },
-    create: {
-      email: adminEmail,
-      passwordHash,
-      name: adminName,
-      role: "PARENT_ADMIN",
-      appUserId: appUser.id,
-    },
-  });
-
+  const existingAdmin = await prisma.adminUser.findUnique({ where: { email: adminEmail } });
+  if (existingAdmin) {
+    await prisma.adminUser.update({
+      where: { id: existingAdmin.id },
+      data: {
+        passwordHash,
+        name: adminName,
+        appUserId: appUser.id,
+      },
+    });
+  } else {
+    // Clear any stale unique appUserId link before create.
+    await prisma.adminUser.updateMany({
+      where: { appUserId: appUser.id },
+      data: { appUserId: null },
+    });
+    await prisma.adminUser.create({
+      data: {
+        email: adminEmail,
+        passwordHash,
+        name: adminName,
+        role: "PARENT_ADMIN",
+        appUserId: appUser.id,
+      },
+    });
+  }
   await prisma.siteSettings.upsert({
     where: { id: 1 },
     update: {
