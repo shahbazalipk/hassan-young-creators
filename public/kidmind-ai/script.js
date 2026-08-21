@@ -450,8 +450,20 @@
       next: "/kidmind-ai"
     });
     if (reg && reg.ok && reg.user) return reg;
-    var login = await HassanSharedAuth.login(email, password, csrf || (await HassanSharedAuth.getSession()).csrfToken, "/kidmind-ai");
-    return login;
+
+    // Refresh CSRF, then try login (covers “email already registered”).
+    boot = await HassanSharedAuth.getSession();
+    var login = await HassanSharedAuth.login(
+      email,
+      password,
+      boot.csrfToken || csrf,
+      "/kidmind-ai"
+    );
+    if (login && login.ok && login.user) return login;
+
+    // Prefer the clearer “already registered / sign in” message when useful.
+    if (reg && reg.alreadyRegistered) return reg;
+    return login || reg;
   }
 
   async function handleSignInSubmit(email, password) {

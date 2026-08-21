@@ -41,16 +41,24 @@ function RegisterForm() {
     setBusy(true);
     setError("");
     try {
+      // Always refresh CSRF right before submit (avoids expired tokens on phones).
+      const boot = await fetch("/api/user/auth", {
+        credentials: "same-origin",
+        cache: "no-store",
+      }).then((r) => r.json());
+      const token = boot.csrfToken || csrf;
+      setCsrf(token);
+
       const res = await fetch("/api/user/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
           action: "register",
-          displayName,
-          email,
+          displayName: displayName.trim(),
+          email: email.trim(),
           password,
-          csrfToken: csrf,
+          csrfToken: token,
           next,
         }),
       });
@@ -123,7 +131,19 @@ function RegisterForm() {
               autoComplete="new-password"
             />
           </label>
-          {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
+          {error ? (
+            <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3">
+              <p className="text-sm font-medium text-red-700">{error}</p>
+              {/already registered|sign in/i.test(error) ? (
+                <Link
+                  className="inline-block text-sm font-semibold text-sky-700 underline"
+                  href={`/login?next=${encodeURIComponent(next)}`}
+                >
+                  Go to Sign in
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
           <button
             type="submit"
             disabled={busy}

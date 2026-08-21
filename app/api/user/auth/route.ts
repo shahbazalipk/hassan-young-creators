@@ -51,6 +51,36 @@ function publicUser(user: {
   };
 }
 
+async function authError(message: string, status = 400, extra: Record<string, unknown> = {}) {
+  const session = await getSession();
+  session.csrfToken = createCsrfToken();
+  await session.save();
+  return jsonError(message, status, { csrfToken: session.csrfToken, ...extra });
+}
+
+async function establishLoggedInSession(user: {
+  id: string;
+  email: string;
+  displayName: string;
+  role: AppUserRole;
+}) {
+  const adminProfile =
+    user.role === AppUserRole.ADMIN
+      ? await prisma.adminUser.findFirst({ where: { appUserId: user.id } })
+      : null;
+
+  const session = await getSession();
+  session.csrfToken = createCsrfToken();
+  session.userId = user.id;
+  session.email = user.email;
+  session.name = user.displayName;
+  session.isLoggedIn = true;
+  session.pending2FA = false;
+  session.adminId = adminProfile?.id;
+  await session.save();
+  return session;
+}
+
 export async function GET() {
   const session = await getSession();
   if (!session.csrfToken) {
@@ -86,40 +116,97 @@ export async function POST(request: NextRequest) {
 
   if (action === "register") {
     const limit = await rateLimit(`user-register:${hashIp(ip)}`, 8, 60 * 60 * 1000);
-    if (!limit.ok) return jsonError("Too many registration attempts. Please try later.", 429);
+    if (!limit.ok) {
+      return authError("Too many registration attempts. Please try later.", 429, {
+        retryAfterSeconds: limit.retryAfterSeconds,
+      });
+    }
 
     const parsed = registerSchema.safeParse(body);
-    if (!parsed.success) return jsonError("Invalid registration details.");
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      const field = issue?.path?.[0];
+      if (field === "email") return authError("Please enter a valid email address.");
+      if (field === "password") {
+        return authError("Password must be at least 10 characters.");
+      }
+      if (field === "displayName") {
+        return authError("Please enter a name with at least 2 characters.");
+      }
+      if (field === "csrfToken") {
+        return authError("Security check expired. Please refresh the page and try again.", 403);
+      }
+      return authError("Please check your name, email, and password, then try again.");
+    }
     if (!verifyCsrfToken(parsed.data.csrfToken)) {
-      return jsonError("Invalid security token. Please refresh and try again.", 403);
+      return authError("Security check expired. Please refresh the page and try again.", 403);
     }
     if (!isStrongPassword(parsed.data.password)) {
-      return jsonError("Password must be at least 10 characters and include a letter and a number.");
+      return authError(
+        "Password must be at least 10 characters and include at least one letter and one number."
+      );
     }
 
     const email = parsed.data.email.toLowerCase().trim();
+    const displayName = parsed.data.displayName.trim();
     // Never accept role/isAdmin from client — always USER on signup.
     const existing = await prisma.appUser.findUnique({ where: { email } });
     if (existing) {
-      return jsonError("Unable to create account with those details.", 400);
+      // If they already registered, sign them in with the same password instead of failing.
+      if (existing.passwordHash) {
+        const valid = await verifyPassword(parsed.data.password, existing.passwordHash);
+        if (valid) {
+          await prisma.appUser.update({
+            where: { id: existing.id },
+            data: { failedLoginAttempts: 0, lockedUntil: null },
+          });
+          const session = await establishLoggedInSession(existing);
+          return jsonOk({
+            message: "Welcome back — this email already had an account, so you are signed in.",
+            csrfToken: session.csrfToken,
+            user: publicUser(existing),
+            next: sanitizeNextPath(body?.next),
+            alreadyRegistered: true,
+          });
+        }
+      }
+      return authError(
+        "This email is already registered. Tap Sign in and use the same email and password.",
+        409,
+        { alreadyRegistered: true }
+      );
     }
 
     const verifyRaw = randomToken(32);
     const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER);
-    const user = await prisma.appUser.create({
-      data: {
-        email,
-        displayName: parsed.data.displayName.trim(),
-        passwordHash: await hashPassword(parsed.data.password),
-        role: AppUserRole.USER,
-        // Without SMTP, auto-verify so account features work; with SMTP require link click.
-        emailVerified: !smtpConfigured,
-        verifyTokenHash: smtpConfigured ? sha256(verifyRaw) : null,
-        verifyTokenExpiresAt: smtpConfigured
-          ? new Date(Date.now() + 48 * 60 * 60 * 1000)
-          : null,
-      },
-    });
+    let user;
+    try {
+      user = await prisma.appUser.create({
+        data: {
+          email,
+          displayName,
+          passwordHash: await hashPassword(parsed.data.password),
+          role: AppUserRole.USER,
+          // Without SMTP, auto-verify so account features work; with SMTP require link click.
+          emailVerified: !smtpConfigured,
+          verifyTokenHash: smtpConfigured ? sha256(verifyRaw) : null,
+          verifyTokenExpiresAt: smtpConfigured
+            ? new Date(Date.now() + 48 * 60 * 60 * 1000)
+            : null,
+        },
+      });
+    } catch (err) {
+      const code = typeof err === "object" && err && "code" in err ? String((err as { code?: string }).code) : "";
+      if (code === "P2002") {
+        return authError(
+          "This email is already registered. Tap Sign in and use the same email and password.",
+          409,
+          { alreadyRegistered: true }
+        );
+      }
+      console.error("register failed", code || err);
+      return authError("Could not create the account right now. Please try again.");
+    }
 
     if (smtpConfigured) {
       const appUrl = process.env.APP_URL || "http://localhost:3000";
@@ -130,17 +217,9 @@ export async function POST(request: NextRequest) {
       }).catch(() => null);
     }
 
-    const session = await getSession();
-    session.csrfToken = createCsrfToken();
-    session.userId = user.id;
-    session.email = user.email;
-    session.name = user.displayName;
-    session.isLoggedIn = true;
-    session.pending2FA = false;
-    session.adminId = undefined;
-    await session.save();
+    const session = await establishLoggedInSession(user);
     return jsonOk({
-      message: "Account created. Please verify your email when you receive the link.",
+      message: "Account created. You are signed in.",
       csrfToken: session.csrfToken,
       user: publicUser(user),
       next: sanitizeNextPath(body?.next),
@@ -209,25 +288,25 @@ export async function POST(request: NextRequest) {
   // Default: login
   const limit = await rateLimit(`user-login:${hashIp(ip)}`, 10, 15 * 60 * 1000);
   if (!limit.ok) {
-    return jsonError("Too many login attempts. Please try again later.", 429, {
+    return authError("Too many login attempts. Please try again later.", 429, {
       retryAfterSeconds: limit.retryAfterSeconds,
     });
   }
 
   const parsed = loginSchema.safeParse(body);
-  if (!parsed.success) return jsonError("Invalid login details.");
+  if (!parsed.success) return authError("Please enter a valid email and password.");
   if (!verifyCsrfToken(parsed.data.csrfToken)) {
-    return jsonError("Invalid security token. Please refresh and try again.", 403);
+    return authError("Security check expired. Please refresh the page and try again.", 403);
   }
 
   const email = parsed.data.email.toLowerCase().trim();
   const user = await prisma.appUser.findUnique({ where: { email } });
   // Generic error — do not reveal whether email exists.
   if (!user || !user.passwordHash) {
-    return jsonError("Email or password is incorrect.", 401);
+    return authError("Email or password is incorrect.", 401);
   }
   if (user.lockedUntil && user.lockedUntil > new Date()) {
-    return jsonError("Account temporarily locked after failed attempts. Try again later.", 423);
+    return authError("Account temporarily locked after failed attempts. Try again later.", 423);
   }
 
   const valid = await verifyPassword(parsed.data.password, user.passwordHash);
@@ -240,7 +319,7 @@ export async function POST(request: NextRequest) {
         lockedUntil: attempts >= 6 ? new Date(Date.now() + 15 * 60 * 1000) : null,
       },
     });
-    return jsonError("Email or password is incorrect.", 401);
+    return authError("Email or password is incorrect.", 401);
   }
 
   await prisma.appUser.update({
@@ -248,23 +327,10 @@ export async function POST(request: NextRequest) {
     data: { failedLoginAttempts: 0, lockedUntil: null },
   });
 
-  const adminProfile =
-    user.role === AppUserRole.ADMIN
-      ? await prisma.adminUser.findFirst({ where: { appUserId: user.id } })
-      : null;
-
-  const session = await getSession();
-  session.csrfToken = createCsrfToken();
-  session.userId = user.id;
-  session.email = user.email;
-  session.name = user.displayName;
-  session.isLoggedIn = true;
-  session.pending2FA = false;
-  session.adminId = adminProfile?.id;
-  await session.save();
-
-  if (adminProfile) {
-    await logActivity("LOGIN", "Administrator signed in", adminProfile.id);
+  const session = await establishLoggedInSession(user);
+  if (user.role === AppUserRole.ADMIN) {
+    const adminProfile = await prisma.adminUser.findFirst({ where: { appUserId: user.id } });
+    if (adminProfile) await logActivity("LOGIN", "Administrator signed in", adminProfile.id);
   }
 
   return jsonOk({

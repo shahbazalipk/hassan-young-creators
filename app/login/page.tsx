@@ -43,11 +43,24 @@ function LoginForm() {
     setBusy(true);
     setError("");
     try {
+      const boot = await fetch("/api/user/auth", {
+        credentials: "same-origin",
+        cache: "no-store",
+      }).then((r) => r.json());
+      const token = boot.csrfToken || csrf;
+      setCsrf(token);
+
       const res = await fetch("/api/user/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ action: "login", email, password, csrfToken: csrf, next }),
+        body: JSON.stringify({
+          action: "login",
+          email: email.trim(),
+          password,
+          csrfToken: token,
+          next,
+        }),
       });
       const data = await res.json();
       if (!data.ok) {
