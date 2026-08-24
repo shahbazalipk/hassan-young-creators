@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useState } from "react";
+import { welcomeRedirect } from "@/lib/welcome-redirect";
 
 function RegisterForm() {
   const router = useRouter();
@@ -24,7 +25,7 @@ function RegisterForm() {
         if (cancelled) return;
         setCsrf(data.csrfToken || "");
         if (data.ok && data.isLoggedIn) {
-          router.replace(next.startsWith("/") ? next : "/");
+          router.replace(welcomeRedirect(next, Boolean(data.user?.isAdmin)));
           return;
         }
       } finally {
@@ -68,7 +69,7 @@ function RegisterForm() {
         if (data.csrfToken) setCsrf(data.csrfToken);
         return;
       }
-      router.replace(data.next || next || "/");
+      router.replace(welcomeRedirect(data.next || next || "/", Boolean(data.user?.isAdmin)));
     } catch {
       setError("Network error. Please try again.");
     } finally {

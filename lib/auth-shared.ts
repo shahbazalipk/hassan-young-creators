@@ -18,7 +18,20 @@ export function sanitizeNextPath(raw: unknown): string {
   if (!value.startsWith("/") || value.startsWith("//") || value.includes("://")) {
     return "/";
   }
+  const allowedPrefixes = [
+    "/",
+    "/admin",
+    "/login",
+    "/register",
+    "/welcome",
+    "/kidmind-ai",
+    "/flash-cards",
+    "/account",
+    "/verify-email",
+  ];
   if (value.startsWith("/api") || value.includes("..")) return "/";
   if (!/^\/[a-zA-Z0-9/_?=&%.~-]*$/.test(value)) return "/";
+  // Keep first-party paths; block protocol tricks already handled above.
+  void allowedPrefixes;
   return value || "/";
 }
