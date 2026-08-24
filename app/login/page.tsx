@@ -62,15 +62,15 @@ function LoginForm() {
           next,
         }),
       });
-      const data = await res.json();
-      if (!data.ok) {
-        setError(data.error || "Sign-in failed.");
-        if (data.csrfToken) setCsrf(data.csrfToken);
+      const data = await res.json().catch(() => null);
+      if (!data || !data.ok) {
+        setError((data && data.error) || "Unable to sign in. Please check your email and password.");
+        if (data?.csrfToken) setCsrf(data.csrfToken);
         return;
       }
       router.replace(welcomeRedirect(data.next || next || "/", Boolean(data.user?.isAdmin)));
     } catch {
-      setError("Network error. Please try again.");
+      setError("Unable to sign in right now. Please refresh and try again.");
     } finally {
       setBusy(false);
     }
@@ -93,13 +93,14 @@ function LoginForm() {
           One account works on Hassan’s website, KidMind AI, and Flash Cards.
         </p>
       </header>
-      <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border bg-white p-5 shadow-sm">
+      <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border bg-white p-5 shadow-sm" noValidate>
         <label className="block text-sm font-medium">
           Email
           <input
             className="mt-1 w-full rounded-lg border px-3 py-2"
             type="email"
             autoComplete="email"
+            inputMode="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}

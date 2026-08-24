@@ -10,24 +10,39 @@
     return res.json();
   }
 
+  async function ensureCsrf(csrfToken) {
+    if (csrfToken && String(csrfToken).length >= 10) return csrfToken;
+    const boot = await getSession();
+    return boot.csrfToken || "";
+  }
+
   async function login(email, password, csrfToken, next) {
+    const token = await ensureCsrf(csrfToken);
     const res = await fetch(API, {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "login", email, password, csrfToken, next }),
+      body: JSON.stringify({ action: "login", email, password, csrfToken: token, next }),
     });
-    return res.json();
+    return res.json().catch(function () {
+      return { ok: false, error: "Unable to sign in right now. Please refresh and try again." };
+    });
   }
 
   async function register(payload) {
+    const token = await ensureCsrf(payload && payload.csrfToken);
     const res = await fetch(API, {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "register", ...payload }),
+      body: JSON.stringify({ action: "register", ...payload, csrfToken: token }),
     });
-    return res.json();
+    return res.json().catch(function () {
+      return {
+        ok: false,
+        error: "Unable to create the account right now. Please refresh and try again.",
+      };
+    });
   }
 
   async function loginWithGoogle(googleIdToken, csrfToken, next) {

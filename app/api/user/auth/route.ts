@@ -28,7 +28,8 @@ const registerSchema = z.object({
 
 const loginSchema = z.object({
   email: z.string().email().max(200),
-  password: z.string().min(8).max(200),
+  // Accept any non-empty password here; wrong length still maps to a clear message below.
+  password: z.string().min(1).max(200),
   csrfToken: z.string().min(10),
   next: z.string().optional(),
 });
@@ -294,7 +295,15 @@ export async function POST(request: NextRequest) {
   }
 
   const parsed = loginSchema.safeParse(body);
-  if (!parsed.success) return authError("Please enter a valid email and password.");
+  if (!parsed.success) {
+    const field = parsed.error.issues[0]?.path?.[0];
+    if (field === "email") return authError("Please enter a valid email address.");
+    if (field === "password") return authError("Please enter your password.");
+    if (field === "csrfToken") {
+      return authError("Security check expired. Please refresh the page and try again.", 403);
+    }
+    return authError("Please enter a valid email and password.");
+  }
   if (!verifyCsrfToken(parsed.data.csrfToken)) {
     return authError("Security check expired. Please refresh the page and try again.", 403);
   }

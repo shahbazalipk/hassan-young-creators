@@ -188,16 +188,17 @@
       </header>
       <div class="card">
         <h2 data-i18n="signInTitle">Sign In</h2>
-        <p class="card-subtitle flow-hint">Step 3 of 4 — Parent Sign In</p>
-        <p class="card-subtitle">Create your parent account to start the quiz.</p>
-        <form id="sign-in-form">
+        <p class="card-subtitle flow-hint">Step 3 of 4 — Parent account</p>
+        <p class="card-subtitle">Create a parent account (or sign in if you already have one) to start the quiz.</p>
+        <p class="card-subtitle">Password must be at least 10 characters and include a letter and a number.</p>
+        <form id="sign-in-form" novalidate>
           <label for="sign-in-email-input" data-i18n="parentEmail">Parent Email</label>
-          <input id="sign-in-email-input" type="email" required autocomplete="email" placeholder="parent@email.com">
+          <input id="sign-in-email-input" type="email" required autocomplete="email" placeholder="parent@email.com" inputmode="email">
 
           <label for="sign-in-password-input" data-i18n="parentPassword">Password</label>
-          <input id="sign-in-password-input" type="password" required autocomplete="new-password" placeholder="••••••••">
+          <input id="sign-in-password-input" type="password" required autocomplete="new-password" placeholder="At least 10 characters" minlength="10">
 
-          <button type="submit" class="btn-primary" data-i18n="signIn">Sign In</button>
+          <button type="submit" class="btn-primary" data-i18n="signIn">Continue</button>
           <button type="button" id="sign-in-back-btn" class="btn-ghost">← Back to Student Details</button>
         </form>
       </div>

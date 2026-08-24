@@ -482,6 +482,13 @@
       return;
     }
 
+    if (!password || String(password).length < 10 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      AppFallback.showError(
+        "Password must be at least 10 characters and include at least one letter and one number."
+      );
+      return;
+    }
+
     try {
       var shared = await sharedRegisterOrLogin(email, password);
       if (shared && shared.ok && shared.user) {
@@ -496,11 +503,12 @@
         AppFallback.showError(shared.error);
         return;
       }
+      AppFallback.showError("Unable to sign in. Please check your email and password, then try again.");
+      return;
     } catch (err) {
-      // Fall through to local AccountStore for offline resilience.
+      AppFallback.showError("Unable to sign in right now. Please refresh the page and try again.");
+      return;
     }
-
-    completeStudentAuth(email, password, profile, true);
   }
 
   async function handleLoginSubmit(email, password) {
@@ -527,9 +535,12 @@
           AppFallback.showError(shared.error);
           return;
         }
+        AppFallback.showError("Unable to sign in. Please check your email and password.");
+        return;
       }
     } catch (err) {
-      // Fall through to legacy local accounts.
+      AppFallback.showError("Unable to sign in right now. Please refresh the page and try again.");
+      return;
     }
 
     var account = typeof AccountStore !== "undefined"
