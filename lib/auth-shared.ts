@@ -27,6 +27,7 @@ export function sanitizeNextPath(raw: unknown): string {
     "/kidmind-ai",
     "/flash-cards",
     "/account",
+    "/profile",
     "/verify-email",
   ];
   if (value.startsWith("/api") || value.includes("..")) return "/";

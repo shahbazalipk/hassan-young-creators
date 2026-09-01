@@ -14,6 +14,10 @@ function RegisterForm() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [publicNickname, setPublicNickname] = useState("");
+  const [parentalConsent, setParentalConsent] = useState(false);
+  const [leaderboardConsent, setLeaderboardConsent] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -59,6 +63,10 @@ function RegisterForm() {
           displayName: displayName.trim(),
           email: email.trim(),
           password,
+          dateOfBirth,
+          parentalConsent: true,
+          leaderboardConsent,
+          publicNickname: publicNickname.trim(),
           csrfToken: token,
           next,
         }),
@@ -91,11 +99,22 @@ function RegisterForm() {
         <header>
           <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">Create account</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Password: at least 10 characters with a letter and a number. Signup always creates a
-            regular user — never an administrator.
+            Password: at least 10 characters with a letter and a number. A parent/guardian must
+            confirm consent. We store date of birth securely to calculate age automatically — never
+            invent a birthday.
           </p>
         </header>
-        <form onSubmit={onSubmit} className="auth-register-card space-y-4 rounded-2xl border border-sky-200 bg-white/90 p-5 shadow-sm">
+        <form
+          onSubmit={(e) => {
+            if (!parentalConsent) {
+              e.preventDefault();
+              setError("A parent or guardian must confirm consent to create this account.");
+              return;
+            }
+            onSubmit(e);
+          }}
+          className="auth-register-card space-y-4 rounded-2xl border border-sky-200 bg-white/90 p-5 shadow-sm"
+        >
           <label className="block text-sm font-medium text-slate-700">
             Display name
             <input
@@ -121,6 +140,20 @@ function RegisterForm() {
             />
           </label>
           <label className="block text-sm font-medium text-slate-700">
+            Student date of birth
+            <input
+              className="auth-register-input mt-1 w-full rounded-lg border border-sky-200 bg-white px-3 py-2.5 text-base"
+              type="date"
+              required
+              value={dateOfBirth}
+              onChange={(e) => setDateOfBirth(e.target.value)}
+              autoComplete="bday"
+            />
+            <span className="mt-1 block text-xs font-normal text-slate-500">
+              Used only to keep questions age-appropriate. Age updates automatically on birthdays.
+            </span>
+          </label>
+          <label className="block text-sm font-medium text-slate-700">
             Password
             <input
               className="auth-register-input mt-1 w-full rounded-lg border border-sky-200 bg-white px-3 py-2.5 text-base"
@@ -131,6 +164,41 @@ function RegisterForm() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
             />
+          </label>
+          <label className="block text-sm font-medium text-slate-700">
+            Leaderboard nickname (optional)
+            <input
+              className="auth-register-input mt-1 w-full rounded-lg border border-sky-200 bg-white px-3 py-2.5 text-base"
+              maxLength={24}
+              value={publicNickname}
+              onChange={(e) => setPublicNickname(e.target.value)}
+              placeholder="e.g. StarCoder"
+            />
+          </label>
+          <label className="flex items-start gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={leaderboardConsent}
+              onChange={(e) => setLeaderboardConsent(e.target.checked)}
+            />
+            <span>
+              Parent/guardian agrees a safe nickname may appear on the public Flash Cards
+              leaderboard (never email or birth date).
+            </span>
+          </label>
+          <label className="flex items-start gap-2 text-sm font-medium text-slate-800">
+            <input
+              type="checkbox"
+              className="mt-1"
+              required
+              checked={parentalConsent}
+              onChange={(e) => setParentalConsent(e.target.checked)}
+            />
+            <span>
+              I am a parent/guardian (or have parental permission) and consent to creating this
+              child-safe learning account.
+            </span>
           </label>
           {error ? (
             <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3">

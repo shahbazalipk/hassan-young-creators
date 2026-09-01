@@ -113,6 +113,15 @@ model AppUser {
   email               String      @unique
   passwordHash        String?
   displayName         String
+  /// Optional public nickname for leaderboards (never email).
+  publicNickname      String?
+  /// Parent/guardian consented to show nickname on public leaderboards.
+  leaderboardConsent  Boolean     @default(false)
+  /// Date of birth (date-only). Age is always computed server-side from this.
+  dateOfBirth         DateTime?
+  dobUpdatedAt        DateTime?
+  /// Limits casual DOB edits used to manipulate difficulty.
+  dobChangeCount      Int         @default(0)
   role                AppUserRole @default(USER)
   emailVerified       Boolean     @default(false)
   googleSub           String?     @unique
@@ -122,6 +131,8 @@ model AppUser {
   resetTokenExpiresAt DateTime?
   failedLoginAttempts Int         @default(0)
   lockedUntil         DateTime?
+  /// Bumped on logout-all / password reset to invalidate sealed sessions.
+  sessionVersion      Int         @default(0)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
   adminProfile        AdminUser?
@@ -491,6 +502,7 @@ model LeaderboardEntry {
   sessionId      String      @unique
   session        QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   playerKey      String
+  /// Safe public display only (nickname or anonymized label — never email/DOB).
   displayName    String
   age            Int?
   ageBand        String?
@@ -505,6 +517,7 @@ model LeaderboardEntry {
 
   @@index([app, scorePercent, correctCount, durationMs, completedAt])
   @@index([app, completedAt])
+  @@index([app, playerKey, completedAt])
 }
 
 /// Recently seen questions per player (reduce immediate repeats across sessions).

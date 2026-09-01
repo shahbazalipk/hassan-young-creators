@@ -110,6 +110,8 @@ export async function selectQuestionsForPlayer(options: {
   playerKey: string;
   age: number;
   count: number;
+  dateOfBirth?: Date | null;
+  recentAccuracy?: number | null;
 }): Promise<{ questions: PublicQuizQuestion[]; internal: DbQuestion[]; ageBand: string } | { error: string }> {
   const age = parseAge(options.age);
   if (age == null) return { error: "Age must be a whole number between 4 and 120." };
@@ -118,7 +120,18 @@ export async function selectQuestionsForPlayer(options: {
   const band = getAgeBand(age);
   if (!band) return { error: "Age is outside supported bands." };
 
+  // Smooth within-band preference (never jumps to a harder band on a birthday).
+  const { smoothDifficultyProgress } = await import("@/lib/age");
+  const progress = smoothDifficultyProgress({
+    age,
+    dob: options.dateOfBirth || null,
+    recentAccuracy: options.recentAccuracy ?? null,
+  });
+
   await ensureGeneratedQuestions(options.app, age, options.count);
+
+  // Bias soft-band mixing: new birthdays / lower progress stay gentler within the same band.
+  const preferPrimaryOnly = progress >= 0.62;
 
   const recent = await prisma.questionHistory.findMany({
     where: { app: options.app, playerKey: options.playerKey },
@@ -200,11 +213,24 @@ export async function selectQuestionsForPlayer(options: {
   };
 
   for (const fb of fallbacks) {
+    if (preferPrimaryOnly && fb.id !== band.id) continue;
     takeFromPool(
       ageSafe.filter((q) => fb.difficulties.includes(q.difficulty.toLowerCase()) || q.difficulty === fb.difficulty),
       true
     );
     if (picked.length >= options.count) break;
+  }
+
+  if (picked.length < options.count) {
+    // Soft lower fill only after primary pool is exhausted (smooth, never upward).
+    for (const fb of fallbacks) {
+      if (fb.id === band.id) continue;
+      takeFromPool(
+        ageSafe.filter((q) => fb.difficulties.includes(q.difficulty.toLowerCase()) || q.difficulty === fb.difficulty),
+        true
+      );
+      if (picked.length >= options.count) break;
+    }
   }
 
   if (picked.length < options.count) {

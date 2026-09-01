@@ -150,8 +150,18 @@
         <button type="submit" class="btn btn-primary btn-block">Let's Play!</button>
       </form>
 
-      <aside class="leaderboard-preview" aria-label="Leaderboard">
-        <h3>Top Players</h3>
+      <aside class="leaderboard-preview" aria-label="Worldwide Leaderboard">
+        <h3>Worldwide Leaderboard</h3>
+        <div class="leaderboard-controls" style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 0.75rem;align-items:center;">
+          <label for="leaderboard-period" class="sr-only">Period</label>
+          <select id="leaderboard-period" aria-label="Leaderboard period">
+            <option value="all">All time</option>
+            <option value="month">Last 30 days</option>
+            <option value="week">Last 7 days</option>
+          </select>
+          <button type="button" id="leaderboard-load-more" class="btn btn-ghost" hidden>Load more</button>
+        </div>
+        <p class="privacy-note" style="margin-top:0;">Safe nicknames only — never emails or birth dates. Ranked by score %, then speed (UTC).</p>
         <ol id="setup-leaderboard" class="leaderboard-list"></ol>
       </aside>
     </div>

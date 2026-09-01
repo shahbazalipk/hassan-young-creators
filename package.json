@@ -16,7 +16,7 @@
     "db:cleanup-emails": "tsx scripts/cleanup-duplicate-emails.ts",
     "db:setup": "tsx scripts/cleanup-duplicate-emails.ts && prisma db push && tsx prisma/seed.ts && tsx scripts/seed-flash-questions.ts",
     "test": "playwright test",
-    "test:quiz": "tsx --test tests/flash-cards-age.test.mjs tests/quiz-age-bands.test.mjs tests/quiz-safety-fallback.test.mjs",
+    "test:quiz": "tsx --test tests/flash-cards-age.test.mjs tests/quiz-age-bands.test.mjs tests/quiz-safety-fallback.test.mjs tests/age-dob.test.mjs tests/auth-session.test.mjs",
     "test:unit": "tsx --test tests/*.test.mjs",
     "test:e2e": "playwright test",
     "postinstall": "prisma generate",

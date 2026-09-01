@@ -10,7 +10,7 @@ import {
   playCelebrate,
   playClick,
 } from "./audio.js";
-import { getLeaderboard, saveScore } from "./storage.js";
+import { saveScore } from "./storage.js";
 import { selectQuestions } from "./questions.js";
 import { renderLeaderboard } from "./leaderboard.js";
 import { QuizEngine } from "./quiz.js";
@@ -54,7 +54,10 @@ const state = {
   leaderboard: [],
   leaderboardError: "",
   leaderboardLoading: false,
+  leaderboardCursor: null,
+  leaderboardPeriod: "all",
   googleCredential: null,
+  authUser: null,
 };
 
 const fireworks = new Fireworks(document.getElementById("fireworks-canvas"));
@@ -105,27 +108,63 @@ function leaveWelcome() {
 async function refreshCloudLeaderboard(highlightName = null) {
   state.leaderboardLoading = true;
   state.leaderboardError = "";
+  const period = state.leaderboardPeriod || "all";
   const targets = ["setup-leaderboard", "quiz-leaderboard", "final-leaderboard"]
     .map((id) => $(id))
     .filter(Boolean);
   targets.forEach((el) => {
-    el.innerHTML = `<p class="leaderboard-empty">Loading global leaderboard…</p>`;
+    renderLeaderboard(el, [], highlightName, { loading: true });
   });
   try {
-    const entries = await fetchLeaderboard(20);
-    state.leaderboard = entries;
-    targets.forEach((el) => renderLeaderboard(el, entries, highlightName));
+    const page = await fetchLeaderboard({ limit: 20, period, cursor: null });
+    state.leaderboard = page.entries;
+    state.leaderboardCursor = page.nextCursor;
+    state.leaderboardPeriod = page.period || period;
+    targets.forEach((el) => renderLeaderboard(el, page.entries, highlightName, { offset: 0 }));
+    updateLeaderboardControls();
   } catch (err) {
-    state.leaderboardError = err?.message || "Could not load global leaderboard.";
-    // Local fallback snapshot so the UI is never blank.
-    const local = getLeaderboard();
-    targets.forEach((el) => {
-      renderLeaderboard(el, local, highlightName);
-      const note = document.createElement("p");
-      note.className = "leaderboard-empty";
-      note.textContent = "Showing local scores — global board temporarily unavailable.";
-      el.appendChild(note);
+    state.leaderboardError = err?.message || "Could not load worldwide leaderboard.";
+    state.leaderboard = [];
+    targets.forEach((el) =>
+      renderLeaderboard(el, [], highlightName, {
+        error: "Worldwide leaderboard is temporarily unavailable. Please try again.",
+      })
+    );
+  } finally {
+    state.leaderboardLoading = false;
+  }
+}
+
+function updateLeaderboardControls() {
+  const periodSel = $("leaderboard-period");
+  if (periodSel) periodSel.value = state.leaderboardPeriod || "all";
+  const moreBtn = $("leaderboard-load-more");
+  if (moreBtn) moreBtn.hidden = !state.leaderboardCursor;
+}
+
+async function loadMoreLeaderboard() {
+  if (!state.leaderboardCursor || state.leaderboardLoading) return;
+  state.leaderboardLoading = true;
+  try {
+    const page = await fetchLeaderboard({
+      limit: 20,
+      period: state.leaderboardPeriod || "all",
+      cursor: state.leaderboardCursor,
     });
+    const offset = state.leaderboard.length;
+    state.leaderboard = state.leaderboard.concat(page.entries);
+    state.leaderboardCursor = page.nextCursor;
+    const el = $("setup-leaderboard");
+    if (el) renderLeaderboard(el, state.leaderboard, state.student?.name || null, { offset: 0 });
+    // Re-render full list with correct ranks
+    ["setup-leaderboard", "quiz-leaderboard", "final-leaderboard"].forEach((id) => {
+      const node = $(id);
+      if (node) renderLeaderboard(node, state.leaderboard, state.student?.name || null, { offset: 0 });
+    });
+    updateLeaderboardControls();
+    void offset;
+  } catch (err) {
+    showToast(err?.message || "Could not load more scores.");
   } finally {
     state.leaderboardLoading = false;
   }
@@ -241,6 +280,7 @@ async function finishQuiz(result) {
       // Keep local score from partial client tracking (0 in cloud mode) — prefer failure message.
     }
   } else {
+    // Offline-only local score snapshot — never the worldwide leaderboard source of truth.
     saveScore({ name: student.name, age: student.age, score: finalScore, total: finalTotal });
   }
 
@@ -525,6 +565,13 @@ function init() {
   $("btn-share-parents").addEventListener("click", onShareParents);
   $("btn-continue").addEventListener("click", onContinue);
 
+  $("leaderboard-period")?.addEventListener("change", (e) => {
+    state.leaderboardPeriod = e.target.value || "all";
+    state.leaderboardCursor = null;
+    refreshCloudLeaderboard(state.student?.name || null);
+  });
+  $("leaderboard-load-more")?.addEventListener("click", loadMoreLeaderboard);
+
   $("admin-login-form").addEventListener("submit", onAdminLogin);
   $("btn-admin-back").addEventListener("click", () => goToSetup(true));
   $("btn-admin-logout").addEventListener("click", () => {
@@ -562,6 +609,10 @@ function init() {
     if (session?.ok && session.isLoggedIn && session.user) {
       state.playerKey = `user:${session.user.uid}`;
       state.authUser = session.user;
+      if (session.user.needsDobSetup) {
+        window.location.href = "/profile/setup?next=" + encodeURIComponent("/flash-cards");
+        return;
+      }
       const bar = $("shared-auth-bar");
       if (bar) {
         bar.hidden = false;
@@ -569,11 +620,16 @@ function init() {
           <button type="button" id="btn-shared-logout" class="btn btn-ghost">Sign out</button>`;
         $("btn-shared-logout")?.addEventListener("click", async () => {
           await fetch("/api/user/auth", { method: "DELETE", credentials: "same-origin" });
-          window.location.reload();
+          window.location.href = "/";
         });
       }
       if ($("student-name") && !$("student-name").value) {
-        $("student-name").value = session.user.displayName.slice(0, 40);
+        $("student-name").value = (session.user.leaderboardName || session.user.displayName).slice(0, 40);
+      }
+      if ($("student-age") && typeof session.user.age === "number") {
+        $("student-age").value = String(session.user.age);
+        $("student-age").readOnly = true;
+        $("student-age").title = "Age is calculated securely from your date of birth.";
       }
     } else {
       const bar = $("shared-auth-bar");

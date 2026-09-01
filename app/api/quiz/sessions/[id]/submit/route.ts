@@ -3,6 +3,8 @@ import { jsonError, jsonOk } from "@/lib/api";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
 import { getClientIp, hashIp } from "@/lib/security";
+import { requireUser } from "@/lib/auth";
+import { publicLeaderboardName } from "@/lib/age";
 
 type AnswerPayload = { questionId: string; selectedIndex: number };
 
@@ -53,7 +55,6 @@ export async function POST(
     seen.add(ans.questionId);
     if (!answerKey.has(ans.questionId)) return jsonError("Answer does not belong to this session.");
     const selected = Number(ans.selectedIndex);
-    // -1 = timed out / skipped (always incorrect)
     if (!Number.isInteger(selected) || selected < -1 || selected > 3) {
       return jsonError("Invalid selected answer index.");
     }
@@ -68,6 +69,12 @@ export async function POST(
     ? Math.round((correct / questionIds.length) * 100)
     : 0;
 
+  let publicName = session.displayName;
+  const authed = await requireUser();
+  if (authed && session.playerKey === `user:${authed.user.id}`) {
+    publicName = publicLeaderboardName(authed.user);
+  }
+
   const updated = await prisma.$transaction(async (tx) => {
     const sess = await tx.quizSession.update({
       where: { id },
@@ -77,15 +84,17 @@ export async function POST(
         scorePercent: percent,
         durationMs,
         submittedAt: new Date(),
+        displayName: publicName.slice(0, 40),
       },
     });
 
-    const entry = await tx.leaderboardEntry.create({
-      data: {
+    const entry = await tx.leaderboardEntry.upsert({
+      where: { sessionId: sess.id },
+      create: {
         app: sess.app,
         sessionId: sess.id,
         playerKey: sess.playerKey,
-        displayName: sess.displayName,
+        displayName: publicName.slice(0, 40),
         age: sess.age,
         ageBand: sess.ageBand,
         score: correct,
@@ -96,6 +105,7 @@ export async function POST(
         durationMs,
         completedAt: new Date(),
       },
+      update: {},
     });
 
     return { sess, entry };
@@ -107,5 +117,6 @@ export async function POST(
     percent: updated.sess.scorePercent,
     leaderboardId: updated.entry.id,
     ageBand: updated.sess.ageBand,
+    alreadySubmitted: false,
   });
 }

@@ -16,6 +16,13 @@ import { rateLimit } from "@/lib/rate-limit";
 import { getClientIp, hashIp, randomToken, sha256 } from "@/lib/security";
 import { sendParentEmail } from "@/lib/email";
 import { verifyGoogleIdToken } from "@/lib/visitors";
+import {
+  ageFromDob,
+  formatDobIso,
+  isPlausibleStudentDob,
+  parseDobInput,
+  publicLeaderboardName,
+} from "@/lib/age";
 import { AppUserRole } from "@prisma/client";
 import { z } from "zod";
 
@@ -23,6 +30,10 @@ const registerSchema = z.object({
   email: z.string().email().max(200),
   password: z.string().min(10).max(200),
   displayName: z.string().min(2).max(60),
+  dateOfBirth: z.string().min(8).max(12),
+  parentalConsent: z.literal(true),
+  leaderboardConsent: z.boolean().optional(),
+  publicNickname: z.string().max(24).optional(),
   csrfToken: z.string().min(10),
 });
 
@@ -40,7 +51,12 @@ function publicUser(user: {
   displayName: string;
   role: AppUserRole;
   emailVerified: boolean;
+  dateOfBirth?: Date | null;
+  publicNickname?: string | null;
+  leaderboardConsent?: boolean | null;
 }) {
+  const hasDob = Boolean(user.dateOfBirth);
+  const age = hasDob && user.dateOfBirth ? ageFromDob(user.dateOfBirth) : null;
   return {
     id: user.id,
     uid: user.id,
@@ -49,6 +65,13 @@ function publicUser(user: {
     emailVerified: user.emailVerified,
     /** Computed server-side from DB role — never accept from client. */
     isAdmin: user.role === AppUserRole.ADMIN,
+    hasDateOfBirth: hasDob,
+    dateOfBirth: hasDob && user.dateOfBirth ? formatDobIso(user.dateOfBirth) : null,
+    age,
+    needsDobSetup: !hasDob,
+    publicNickname: user.publicNickname || null,
+    leaderboardConsent: Boolean(user.leaderboardConsent),
+    leaderboardName: publicLeaderboardName(user),
   };
 }
 
@@ -64,6 +87,7 @@ async function establishLoggedInSession(user: {
   email: string;
   displayName: string;
   role: AppUserRole;
+  sessionVersion?: number;
 }) {
   const adminProfile =
     user.role === AppUserRole.ADMIN
@@ -78,6 +102,7 @@ async function establishLoggedInSession(user: {
   session.isLoggedIn = true;
   session.pending2FA = false;
   session.adminId = adminProfile?.id;
+  session.sessionVersion = user.sessionVersion ?? 0;
   await session.save();
   return session;
 }
@@ -102,6 +127,21 @@ export async function GET() {
     session.destroy();
     return jsonOk({ csrfToken: createCsrfToken(), isLoggedIn: false, user: null });
   }
+
+  // Reject sessions invalidated by logout-all / password reset.
+  if (
+    typeof session.sessionVersion === "number" &&
+    session.sessionVersion !== user.sessionVersion
+  ) {
+    session.destroy();
+    const csrf = createCsrfToken();
+    return jsonOk({ csrfToken: csrf, isLoggedIn: false, user: null });
+  }
+
+  // Rolling session: re-seal cookie so Secure HttpOnly session stays fresh across visits.
+  session.sessionVersion = user.sessionVersion;
+  session.csrfToken = session.csrfToken || createCsrfToken();
+  await session.save();
 
   return jsonOk({
     csrfToken: session.csrfToken,
@@ -134,10 +174,16 @@ export async function POST(request: NextRequest) {
       if (field === "displayName") {
         return authError("Please enter a name with at least 2 characters.");
       }
+      if (field === "dateOfBirth") {
+        return authError("Please enter the student’s date of birth (YYYY-MM-DD).");
+      }
+      if (field === "parentalConsent") {
+        return authError("A parent or guardian must confirm consent to create this account.");
+      }
       if (field === "csrfToken") {
         return authError("Security check expired. Please refresh the page and try again.", 403);
       }
-      return authError("Please check your name, email, and password, then try again.");
+      return authError("Please check your name, email, password, and date of birth, then try again.");
     }
     if (!verifyCsrfToken(parsed.data.csrfToken)) {
       return authError("Security check expired. Please refresh the page and try again.", 403);
@@ -148,8 +194,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const dob = parseDobInput(parsed.data.dateOfBirth);
+    if (!dob || !isPlausibleStudentDob(dob)) {
+      return authError("Date of birth must make the student between 4 and 18 years old.");
+    }
+
     const email = parsed.data.email.toLowerCase().trim();
     const displayName = parsed.data.displayName.trim();
+    const publicNickname = (parsed.data.publicNickname || "").trim().slice(0, 24) || null;
+    const leaderboardConsent = Boolean(parsed.data.leaderboardConsent);
     // Never accept role/isAdmin from client — always USER on signup.
     const existing = await prisma.appUser.findUnique({ where: { email } });
     if (existing) {
@@ -188,6 +241,11 @@ export async function POST(request: NextRequest) {
           displayName,
           passwordHash: await hashPassword(parsed.data.password),
           role: AppUserRole.USER,
+          dateOfBirth: dob,
+          dobUpdatedAt: new Date(),
+          dobChangeCount: 0,
+          publicNickname,
+          leaderboardConsent,
           // Without SMTP, auto-verify so account features work; with SMTP require link click.
           emailVerified: !smtpConfigured,
           verifyTokenHash: smtpConfigured ? sha256(verifyRaw) : null,
@@ -353,11 +411,18 @@ export async function POST(request: NextRequest) {
 export async function DELETE() {
   const session = await getSession();
   const userId = session.userId;
-  session.destroy();
+  // Bump sessionVersion so any other sealed cookies become invalid everywhere.
   if (userId) {
+    await prisma.appUser
+      .update({
+        where: { id: userId },
+        data: { sessionVersion: { increment: 1 } },
+      })
+      .catch(() => null);
     const admin = await prisma.adminUser.findFirst({ where: { appUserId: userId } });
     if (admin) await logActivity("LOGOUT", "Signed out", admin.id);
   }
+  session.destroy();
   return jsonOk({ message: "Signed out across Hassan’s websites." });
 }
 
@@ -403,6 +468,78 @@ export async function PUT(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const action = String(body?.action || "reset");
+
+  if (action === "update-profile" || action === "set-dob") {
+    const authed = await requireUser();
+    if (!authed) return jsonError("Please sign in first.", 401);
+    if (!verifyCsrfToken(String(body?.csrfToken || ""))) {
+      return jsonError("Invalid security token.", 403);
+    }
+
+    const data: {
+      dateOfBirth?: Date;
+      dobUpdatedAt?: Date;
+      dobChangeCount?: number;
+      publicNickname?: string | null;
+      leaderboardConsent?: boolean;
+      displayName?: string;
+    } = {};
+
+    if (body?.dateOfBirth != null && String(body.dateOfBirth).trim()) {
+      const dob = parseDobInput(body.dateOfBirth);
+      if (!dob || !isPlausibleStudentDob(dob)) {
+        return jsonError("Date of birth must make the student between 4 and 18 years old.");
+      }
+      const existing = authed.user.dateOfBirth;
+      if (existing) {
+        // Prevent repeated DOB churn for difficulty manipulation (max 2 corrections).
+        if (authed.user.dobChangeCount >= 2) {
+          return jsonError(
+            "Date of birth can only be corrected a limited number of times. Ask a parent/guardian for help.",
+            403
+          );
+        }
+        const same =
+          existing.getUTCFullYear() === dob.getUTCFullYear() &&
+          existing.getUTCMonth() === dob.getUTCMonth() &&
+          existing.getUTCDate() === dob.getUTCDate();
+        if (!same) {
+          data.dateOfBirth = dob;
+          data.dobUpdatedAt = new Date();
+          data.dobChangeCount = authed.user.dobChangeCount + 1;
+        }
+      } else {
+        data.dateOfBirth = dob;
+        data.dobUpdatedAt = new Date();
+        data.dobChangeCount = 0;
+      }
+    } else if (action === "set-dob" && !authed.user.dateOfBirth) {
+      return jsonError("Please enter the student’s date of birth.");
+    }
+
+    if (typeof body?.leaderboardConsent === "boolean") {
+      data.leaderboardConsent = body.leaderboardConsent;
+    }
+    if (typeof body?.publicNickname === "string") {
+      data.publicNickname = body.publicNickname.trim().slice(0, 24) || null;
+    }
+    if (typeof body?.displayName === "string" && body.displayName.trim().length >= 2) {
+      data.displayName = body.displayName.trim().slice(0, 60);
+    }
+
+    if (!Object.keys(data).length) {
+      return jsonOk({ message: "No changes.", user: publicUser(authed.user) });
+    }
+
+    const updated = await prisma.appUser.update({
+      where: { id: authed.user.id },
+      data,
+    });
+    return jsonOk({
+      message: "Profile updated.",
+      user: publicUser(updated),
+    });
+  }
 
   if (action === "verify-email") {
     const token = String(body?.token || "");
@@ -452,6 +589,7 @@ export async function PATCH(request: NextRequest) {
       resetTokenExpiresAt: null,
       failedLoginAttempts: 0,
       lockedUntil: null,
+      sessionVersion: { increment: 1 },
     },
   });
 
@@ -463,7 +601,3 @@ export async function PATCH(request: NextRequest) {
 
   return jsonOk({ message: "Password updated. You can sign in now." });
 }
-
-// silence unused import warning if tree-shaken oddly
-void requireUser;
-void establishUserSession;

@@ -341,12 +341,18 @@
   }
 
   function handleLogout() {
+    closeProfileDropdown();
+    pendingStudent = { name: "", age: null, questionCount: 10 };
     QuizSession.clearSession();
     QuizProgressStore.clearProgress();
     if (typeof AdminSession !== "undefined") AdminSession.logout();
-    pendingStudent = { name: "", age: null, questionCount: 10 };
-    closeProfileDropdown();
-    showLoginScreen();
+    if (typeof HassanSharedAuth !== "undefined") {
+      HassanSharedAuth.logout().finally(function () {
+        window.location.href = "/";
+      });
+      return;
+    }
+    window.location.href = "/";
   }
 
   function completeStudentAuth(email, password, profile, startQuizAfter) {
@@ -409,33 +415,32 @@
   function renderSharedAuthBar(user) {
     var bar = document.getElementById("shared-auth-bar");
     if (!bar) return;
-    bar.hidden = false;
+    // Authenticated users go straight into KidMind — no Create Account / Sign In / Share CTAs.
     if (user) {
+      bar.hidden = false;
       bar.innerHTML =
         '<span>Signed in as <strong>' +
-        (user.displayName || user.email) +
+        (user.displayName || "Student") +
         "</strong></span> " +
-        '<button type="button" id="btn-shared-logout" class="btn-ghost">Sign out (all sites)</button>';
+        '<button type="button" id="btn-shared-logout" class="btn-ghost">Sign out</button>';
       var btn = document.getElementById("btn-shared-logout");
       if (btn) {
         btn.addEventListener("click", function () {
-          if (typeof HassanSharedAuth !== "undefined") {
-            HassanSharedAuth.logout().then(function () {
-              QuizSession.clearSession();
-              window.location.href = "/kidmind-ai";
-            });
-          }
+          handleLogout();
         });
       }
-    } else {
-      bar.innerHTML =
-        '<a class="btn-ghost" href="/login?next=' +
-        encodeURIComponent("/kidmind-ai") +
-        '">Shared sign in</a> ' +
-        '<a class="btn-ghost" href="/register?next=' +
-        encodeURIComponent("/kidmind-ai") +
-        '">Create account</a>';
+      var loginLink = document.getElementById("go-to-login-btn");
+      if (loginLink) loginLink.hidden = true;
+      var loginRow = document.querySelector("#language-screen .inline-link-row");
+      if (loginRow) loginRow.hidden = true;
+      return;
     }
+    // Guests use the main website auth flow only — no separate KidMind login system.
+    bar.hidden = false;
+    bar.innerHTML =
+      '<a class="btn-ghost" href="/login?next=' +
+      encodeURIComponent("/kidmind-ai") +
+      '">Sign in on Hassan’s website</a>';
   }
 
   async function sharedRegisterOrLogin(email, password) {
@@ -1452,17 +1457,49 @@
       })
       .then(function (shared) {
         if (shared && shared.ok && shared.isLoggedIn && shared.user) {
+          window.__hassanSharedUser = shared.user;
           renderSharedAuthBar(shared.user);
+          var age =
+            typeof shared.user.age === "number" && shared.user.age >= 4
+              ? shared.user.age
+              : pendingStudent.age || 10;
+          if (shared.user.needsDobSetup) {
+            window.location.href =
+              "/profile/setup?next=" + encodeURIComponent("/kidmind-ai");
+            return;
+          }
           if (!hasPersistedSession()) {
-            applySharedUserSession(shared.user, {
-              studentName: shared.user.displayName,
-              age: 10,
-              language: currentLanguage,
-              questionCount: 10
-            }, false);
+            applySharedUserSession(
+              shared.user,
+              {
+                studentName: shared.user.displayName,
+                age: age,
+                language: currentLanguage,
+                questionCount: 10
+              },
+              false
+            );
+          } else {
+            // Refresh local quiz session age from server-calculated age when available.
+            if (typeof QuizSession !== "undefined" && QuizSession.isLoggedIn()) {
+              try {
+                QuizSession.createSession(
+                  QuizSession.getStudentName() || shared.user.displayName,
+                  age,
+                  shared.user.email,
+                  currentLanguage,
+                  QuizSession.getQuestionCount ? QuizSession.getQuestionCount() : 10,
+                  { originalAge: age, ageRecordedAt: new Date().toISOString(), sharedUid: shared.user.uid }
+                );
+              } catch (e) { /* keep existing */ }
+            }
+            showDashboardScreen();
           }
         } else {
+          window.__hassanSharedUser = null;
           renderSharedAuthBar(null);
+          // Guests must use the main website login once — no KidMind-only accounts.
+          window.location.href = "/login?next=" + encodeURIComponent("/kidmind-ai");
         }
       })
       .catch(function () {

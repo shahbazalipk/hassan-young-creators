@@ -20,12 +20,14 @@ export type AuthSessionData = {
   pending2FA?: boolean;
   /** Never trust this alone for authorization — always re-check DB role. */
   adminId?: string;
+  /** Must match AppUser.sessionVersion or the session is rejected. */
+  sessionVersion?: number;
 };
 
 /** @deprecated alias */
 export type SessionData = AuthSessionData;
 
-const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14; // 14 days — persistent shared login
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days — persistent shared login across visits
 
 export function getSessionOptions(): SessionOptions {
   const password = process.env.SESSION_SECRET;
@@ -42,6 +44,8 @@ export function getSessionOptions(): SessionOptions {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
+      // Rolling cookies: maxAge refreshed whenever session.save() runs.
+      maxAge: SESSION_TTL_SECONDS,
     },
   };
 }
@@ -119,6 +123,13 @@ export async function requireUser(): Promise<{
   }
   const user = await prisma.appUser.findUnique({ where: { id: session.userId } });
   if (!user) return null;
+  if (
+    typeof session.sessionVersion === "number" &&
+    session.sessionVersion !== user.sessionVersion
+  ) {
+    session.destroy();
+    return null;
+  }
   return { session: session as AuthSessionData & { save: () => Promise<void> }, user };
 }
 
@@ -175,6 +186,8 @@ export async function establishUserSession(user: AppUser, options?: { pending2FA
   session.adminId = options?.adminId;
   session.pending2FA = Boolean(options?.pending2FA);
   session.isLoggedIn = !options?.pending2FA;
+  session.sessionVersion = user.sessionVersion ?? 0;
+  session.csrfToken = session.csrfToken || undefined;
   await session.save();
   return session;
 }
