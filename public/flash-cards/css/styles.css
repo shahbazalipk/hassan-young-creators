@@ -908,4 +908,31 @@ body {
   .certificate {
     padding: 1.35rem 1rem;
   }
+
+  .slash-card {
+    padding: 1rem;
+  }
+
+  .question-text {
+    font-size: clamp(1.15rem, 5.5vw, 1.45rem);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .answer-options {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .answer-btn {
+    font-size: 0.98rem;
+    padding: 0.95rem 1rem;
+    min-height: 3rem;
+  }
+
+  .quiz-topbar,
+  .slash-card-banner {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
 }

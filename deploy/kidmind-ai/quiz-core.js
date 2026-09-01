@@ -5,11 +5,11 @@ var QuizCore = (function () {
   var VALID_QUESTION_COUNTS = [10, 15, 30, 60, 90];
 
   var AGE_TIERS = [
-    { label: "5–6 years", min: 5, max: 6, difficulty: "very_easy" },
-    { label: "7–8 years", min: 7, max: 8, difficulty: "easy" },
-    { label: "9–10 years", min: 9, max: 10, difficulty: "medium" },
-    { label: "11–12 years", min: 11, max: 12, difficulty: "medium_hard" },
-    { label: "13–15 years", min: 13, max: 15, difficulty: "advanced" }
+    { id: "4-6", label: "4–6 years", min: 4, max: 6, difficulty: "very_easy", difficulties: ["very_easy"] },
+    { id: "7-9", label: "7–9 years", min: 7, max: 9, difficulty: "easy", difficulties: ["easy"] },
+    { id: "10-12", label: "10–12 years", min: 10, max: 12, difficulty: "moderate", difficulties: ["medium", "moderate", "medium_hard"] },
+    { id: "13-15", label: "13–15 years", min: 13, max: 15, difficulty: "intermediate", difficulties: ["advanced", "intermediate"] },
+    { id: "16+", label: "16+ years", min: 16, max: 120, difficulty: "advanced", difficulties: ["advanced"] }
   ];
 
   function getAgeTier(age) {
@@ -26,13 +26,27 @@ var QuizCore = (function () {
     return String(q.question || "") + "|" + String(q.category || q.subject || "");
   }
 
+  function normalizeQuestionText(text) {
+    return String(text || "")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   function filterByAge(questions, age) {
     if (!questions || !questions.length) return [];
     var tier = getAgeTier(age);
     if (!tier) return [];
+    var allowed = {};
+    (tier.difficulties || [tier.difficulty]).forEach(function (d) {
+      allowed[d] = true;
+    });
     return questions.filter(function (q) {
-      if (age < q.ageMin || age > q.ageMax) return false;
-      if (q.difficulty && q.difficulty !== tier.difficulty) return false;
+      if (!q) return false;
+      if (q.difficulty && !allowed[q.difficulty]) return false;
+      // Never serve questions written for older children than the learner.
+      if (typeof q.ageMin === "number" && age < q.ageMin) return false;
       return true;
     });
   }

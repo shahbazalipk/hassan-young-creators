@@ -154,8 +154,8 @@ function validateSetup() {
     $("name-error").textContent = "Please enter your name (at least 2 letters).";
     ok = false;
   }
-  if (!Number.isFinite(age) || age < 5 || age > 16) {
-    $("age-error").textContent = "Age must be between 5 and 16.";
+  if (!Number.isFinite(age) || age < 4 || age > 18) {
+    $("age-error").textContent = "Age must be between 4 and 18.";
     ok = false;
   }
   return ok ? { name, age } : null;

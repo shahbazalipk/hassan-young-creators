@@ -146,7 +146,7 @@ var QuizSession = (function () {
       ? AgeCalculator.clampChildAge(newOriginalAge)
       : parseInt(newOriginalAge, 10);
     if (original == null || (typeof Security !== "undefined" && !Security.isValidAge(original))) {
-      return { success: false, error: "Please enter a valid age (5–15)." };
+      return { success: false, error: "Please enter a valid age (4–18)." };
     }
     s.originalAge = original;
     s.ageRecordedAt = options.ageRecordedAt || new Date().toISOString();

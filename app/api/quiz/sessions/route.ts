@@ -41,9 +41,9 @@ export async function POST(request: NextRequest) {
   if (resolvedName.length < 2) {
     return jsonError("Please enter a display name (at least 2 characters).");
   }
-  if (age == null) return jsonError("Age must be a whole number between 5 and 120.");
-  if (app === "flash-cards" && (age < 5 || age > 17)) {
-    return jsonError("Age must be between 5 and 17 for Flash Cards.");
+  if (age == null) return jsonError("Age must be a whole number between 4 and 120.");
+  if (app === "flash-cards" && (age < 4 || age > 18)) {
+    return jsonError("Age must be between 4 and 18 for Flash Cards.");
   }
 
   const selected = await selectQuestionsForPlayer({ app, playerKey, age, count });

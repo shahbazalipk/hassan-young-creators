@@ -161,7 +161,7 @@ var AccountStore = (function () {
         nextOriginal = AgeCalculator.clampChildAge(nextOriginal);
       }
       if (nextOriginal == null || (typeof Security !== "undefined" && !Security.isValidAge(nextOriginal))) {
-        return { success: false, error: "Please enter a valid age (5–15)." };
+        return { success: false, error: "Please enter a valid age (4–18)." };
       }
       updated.originalAge = nextOriginal;
       updated.ageRecordedAt = updates.ageRecordedAt || new Date().toISOString();

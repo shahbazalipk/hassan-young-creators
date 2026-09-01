@@ -22,7 +22,7 @@ var Security = (function () {
 
   function isValidAge(age) {
     var n = parseInt(age, 10);
-    return !isNaN(n) && n >= 5 && n <= 15;
+    return !isNaN(n) && n >= 4 && n <= 18;
   }
 
   function isValidQuestionCount(count) {

@@ -857,6 +857,44 @@ body {
   z-index: 5;
 }
 
+.shared-auth-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.85rem;
+  font-size: 0.9rem;
+}
+
+.privacy-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: rgba(15, 23, 42, 0.72);
+}
+
+.auth-box {
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+  border-radius: 14px;
+  border: 1px dashed rgba(79, 70, 229, 0.35);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.auth-label {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+#google-signin-btn {
+  min-height: 40px;
+}
+
+#btn-google-signout {
+  margin-top: 0.5rem;
+}
+
 /* ---------- Mobile tweaks ---------- */
 @media (max-width: 480px) {
   .card-count-options {
@@ -869,5 +907,32 @@ body {
 
   .certificate {
     padding: 1.35rem 1rem;
+  }
+
+  .slash-card {
+    padding: 1rem;
+  }
+
+  .question-text {
+    font-size: clamp(1.15rem, 5.5vw, 1.45rem);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .answer-options {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .answer-btn {
+    font-size: 0.98rem;
+    padding: 0.95rem 1rem;
+    min-height: 3rem;
+  }
+
+  .quiz-topbar,
+  .slash-card-banner {
+    flex-wrap: wrap;
+    gap: 0.35rem;
   }
 }

@@ -200,7 +200,7 @@ var AccountSettings = (function () {
     }
 
     if (newAgeRaw && (isNaN(newAge) || !Security.isValidAge(newAge))) {
-      showError("Please enter a valid age between 5 and 15.");
+      showError("Please enter a valid age between 4 and 18.");
       return;
     }
 

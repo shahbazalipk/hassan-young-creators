@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base href="/flash-cards/">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Slash Cards — fun age-based quiz game for kids. Created by HASSAAN." />
@@ -10,8 +11,52 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
+
+  <style id="hassan-portfolio-back-style">
+    #hassan-back-to-portfolio {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2147483000;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.55);
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: #fff !important;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-decoration: none !important;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.28);
+      backdrop-filter: blur(8px);
+    }
+    #hassan-back-to-portfolio:hover,
+    #hassan-back-to-portfolio:focus-visible {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+      outline: none;
+    }
+    #hassan-back-to-portfolio span[aria-hidden="true"] {
+      font-size: 16px;
+    }
+    @media (max-width: 640px) {
+      #hassan-back-to-portfolio {
+        top: 10px;
+        left: 10px;
+        padding: 9px 12px;
+        font-size: 13px;
+      }
+    }
+  </style>
+
 </head>
 <body>
+  <a id="hassan-back-to-portfolio" href="/" data-cursor="link" aria-label="Back to Hassan’s Website"><span aria-hidden="true">←</span> Back to Hassan’s Website</a>
+
   <!-- Fireworks canvas (welcome + celebrations) -->
   <canvas id="fireworks-canvas" aria-hidden="true"></canvas>
 
@@ -37,6 +82,8 @@
         <p>Tell us about you, then pick how many Slash Cards to play</p>
       </header>
 
+      <div id="shared-auth-bar" class="shared-auth-bar" hidden></div>
+
       <form id="setup-form" class="setup-form" novalidate>
         <div class="field">
           <label for="student-name">Your Name</label>
@@ -58,9 +105,9 @@
             type="number"
             id="student-age"
             name="age"
-            placeholder="5–16"
-            min="5"
-            max="16"
+            placeholder="4–18"
+            min="4"
+            max="18"
             required
           />
           <span class="field-error" id="age-error" role="alert"></span>
@@ -87,6 +134,18 @@
             </label>
           </div>
         </fieldset>
+
+        <div class="auth-box" id="google-auth-box" hidden>
+          <p class="auth-label">Optional: Sign in with Google</p>
+          <div id="google-signin-btn"></div>
+          <button type="button" id="btn-google-signout" class="btn btn-ghost" hidden>Sign out</button>
+          <p class="privacy-note" id="auth-status">Playing as guest (anonymous visitor ID).</p>
+        </div>
+
+        <p class="privacy-note">
+          Privacy: We record visit analytics with a privacy-safe ID. Google name, email, and photo
+          are stored only if you choose Sign in with Google. Scores sync to a shared leaderboard.
+        </p>
 
         <button type="submit" class="btn btn-primary btn-block">Let's Play!</button>
       </form>

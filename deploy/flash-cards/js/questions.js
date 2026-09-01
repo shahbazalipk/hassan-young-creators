@@ -1,6 +1,6 @@
 /**
- * Built-in quiz bank + age-based selection.
- * Difficulty bands: easy (5–7), medium (8–10), hard (11–16)
+ * Built-in quiz bank + age-based selection (offline fallback).
+ * Bands: 4–6 very_easy, 7–9 easy, 10–12 moderate, 13–15 intermediate, 16+ advanced.
  */
 
 export const DEFAULT_QUESTIONS = [
@@ -436,39 +436,227 @@ export const DEFAULT_QUESTIONS = [
   },
 ];
 
-export function ageToDifficulty(age) {
-  const n = Number(age);
-  if (n <= 7) return "easy";
-  if (n <= 10) return "medium";
-  return "hard";
+/** Dedicated 7–9 easy offline bank (legacy DEFAULT used easy/medium/hard labels). */
+export const EASY_BAND_QUESTIONS = [
+  {
+    id: "ea1",
+    text: "What is 8 + 7?",
+    options: ["14", "15", "16", "17"],
+    correct: 1,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+  {
+    id: "ea2",
+    text: "How many sides does a square have?",
+    options: ["3", "4", "5", "6"],
+    correct: 1,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+  {
+    id: "ea3",
+    text: "Which planet do we live on?",
+    options: ["Mars", "Earth", "Jupiter", "Venus"],
+    correct: 1,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+  {
+    id: "ea4",
+    text: "What is 20 − 9?",
+    options: ["9", "10", "11", "12"],
+    correct: 2,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+  {
+    id: "ea5",
+    text: "A week has how many days?",
+    options: ["5", "6", "7", "8"],
+    correct: 2,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+  {
+    id: "ea6",
+    text: "Which animal is known for hopping?",
+    options: ["Elephant", "Kangaroo", "Whale", "Snake"],
+    correct: 1,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+  {
+    id: "ea7",
+    text: "What is 6 × 3?",
+    options: ["12", "15", "18", "21"],
+    correct: 2,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+  {
+    id: "ea8",
+    text: "Ice is frozen…",
+    options: ["Sand", "Water", "Air", "Metal"],
+    correct: 1,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+  {
+    id: "ea9",
+    text: "Which word means the opposite of “big”?",
+    options: ["Huge", "Small", "Tall", "Wide"],
+    correct: 1,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+  {
+    id: "ea10",
+    text: "How many months are in a year?",
+    options: ["10", "11", "12", "13"],
+    correct: 2,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+  {
+    id: "ea11",
+    text: "What do bees make?",
+    options: ["Milk", "Honey", "Bread", "Juice"],
+    correct: 1,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+  {
+    id: "ea12",
+    text: "A triangle has how many sides?",
+    options: ["2", "3", "4", "5"],
+    correct: 1,
+    difficulty: "easy",
+    minAge: 7,
+    maxAge: 9,
+  },
+];
+
+// Remap legacy labels onto product vocabulary for offline selection.
+for (const q of DEFAULT_QUESTIONS) {
+  if (q.difficulty === "easy") {
+    q.difficulty = "very_easy";
+    q.minAge = 4;
+    q.maxAge = 6;
+  } else if (q.difficulty === "medium") {
+    q.difficulty = "moderate";
+    q.minAge = 10;
+    q.maxAge = 12;
+  } else if (q.difficulty === "hard") {
+    q.difficulty = "intermediate";
+    q.minAge = 13;
+    q.maxAge = 15;
+  }
 }
 
-/** Prefer matching band, then spill into nearby bands if the bank is short. */
-export function selectQuestions(allQuestions, age, count) {
-  const primary = ageToDifficulty(age);
-  const order =
-    primary === "easy"
-      ? ["easy", "medium", "hard"]
-      : primary === "medium"
-        ? ["medium", "easy", "hard"]
-        : ["hard", "medium", "easy"];
+DEFAULT_QUESTIONS.push(...EASY_BAND_QUESTIONS);
 
-  const byDiff = { easy: [], medium: [], hard: [] };
-  for (const q of allQuestions) {
-    if (byDiff[q.difficulty]) byDiff[q.difficulty].push(q);
-  }
+export function ageToDifficulty(age) {
+  const n = Number(age);
+  if (n <= 6) return "very_easy";
+  if (n <= 9) return "easy";
+  if (n <= 12) return "moderate";
+  if (n <= 15) return "intermediate";
+  return "advanced";
+}
+
+export function ageToBand(age) {
+  const n = Number(age);
+  if (n <= 6) return { id: "4-6", min: 4, max: 6, difficulty: "very_easy" };
+  if (n <= 9) return { id: "7-9", min: 7, max: 9, difficulty: "easy" };
+  if (n <= 12) return { id: "10-12", min: 10, max: 12, difficulty: "moderate" };
+  if (n <= 15) return { id: "13-15", min: 13, max: 15, difficulty: "intermediate" };
+  return { id: "16+", min: 16, max: 120, difficulty: "advanced" };
+}
+
+/** Map legacy bank labels onto the new difficulty vocabulary. */
+function normalizeDifficulty(d) {
+  const x = String(d || "").toLowerCase();
+  if (x === "very_easy" || x === "very-easy") return "very_easy";
+  if (x === "easy") return "easy";
+  if (x === "moderate" || x === "medium") return "moderate";
+  if (x === "intermediate" || x === "hard" || x === "medium_hard") return "intermediate";
+  if (x === "advanced") return "advanced";
+  return x;
+}
+
+function preferredDifficulties(bandDifficulty) {
+  if (bandDifficulty === "very_easy") return ["very_easy", "easy"];
+  if (bandDifficulty === "easy") return ["easy", "very_easy"];
+  if (bandDifficulty === "moderate") return ["moderate", "easy", "very_easy"];
+  if (bandDifficulty === "intermediate") return ["intermediate", "moderate", "easy"];
+  return ["advanced", "intermediate", "moderate"];
+}
+
+/**
+ * Local fallback selector (used only if cloud quiz API is unavailable).
+ * NEVER spills to harder/older bands for younger children.
+ */
+export function selectQuestions(allQuestions, age, count, options = {}) {
+  const band = ageToBand(age);
+  const exclude = new Set(options.excludeIds || []);
+  const used = new Set();
+  const preferred = preferredDifficulties(band.difficulty);
+  const allowed = new Set(preferred);
+
+  const ageSafe = allQuestions.filter((q) => {
+    if (!q?.id || exclude.has(q.id)) return false;
+    const diff = normalizeDifficulty(q.difficulty);
+    if (!allowed.has(diff)) return false;
+    if (typeof q.minAge === "number" && typeof q.maxAge === "number") {
+      if (age >= q.minAge && age <= q.maxAge) return true;
+      // Soft lower-band: older learners may see easier questions, never harder.
+      return age > q.maxAge && q.maxAge <= band.max;
+    }
+    // Legacy bank without min/max: map old labels by band.
+    if (band.difficulty === "very_easy") return diff === "very_easy" || diff === "easy";
+    if (band.difficulty === "easy") return diff === "easy" || diff === "very_easy";
+    if (band.difficulty === "moderate") return diff === "moderate" || diff === "easy";
+    if (band.difficulty === "intermediate") {
+      return diff === "intermediate" || diff === "moderate";
+    }
+    return diff === "advanced" || diff === "intermediate" || diff === "moderate";
+  });
 
   const picked = [];
-  for (const diff of order) {
-    const pool = shuffle([...byDiff[diff]]);
+  for (const diff of preferred) {
+    const pool = shuffle(
+      ageSafe.filter((q) => normalizeDifficulty(q.difficulty) === diff && !used.has(q.id))
+    );
     for (const q of pool) {
       if (picked.length >= count) break;
+      used.add(q.id);
       picked.push(q);
     }
     if (picked.length >= count) break;
   }
 
-  return shuffle(picked).slice(0, count);
+  // Deduplicate by id (safety)
+  const unique = [];
+  const seen = new Set();
+  for (const q of shuffle(picked)) {
+    if (seen.has(q.id)) continue;
+    seen.add(q.id);
+    unique.push(q);
+    if (unique.length >= count) break;
+  }
+  return unique;
 }
 
 function shuffle(arr) {

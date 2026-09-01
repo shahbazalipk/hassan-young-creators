@@ -975,4 +975,24 @@ html[data-theme="dark"] .theme-toggle {
 @media (max-width: 480px) {
   .profile-btn-label { display: none; }
   .splash-title { font-size: 1.5rem; }
+  .quiz-question {
+    font-size: clamp(1.05rem, 4.8vw, 1.3rem);
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .quiz-options,
+  .options-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem;
+  }
+  .quiz-option-btn,
+  .option-btn {
+    font-size: 0.98rem;
+    padding: 0.9rem 1rem;
+    min-height: 3rem;
+    text-align: left;
+  }
+  .card {
+    padding: 1rem;
+  }
 }

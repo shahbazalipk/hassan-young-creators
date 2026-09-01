@@ -3,11 +3,11 @@ var QuestionBank = (function () {
   var CUSTOM_KEY = "custom_questions";
 
   var DIFFICULTY_BY_AGE = {
-    5: "very_easy", 6: "very_easy",
-    7: "easy", 8: "easy",
-    9: "medium", 10: "medium",
-    11: "medium_hard", 12: "medium_hard",
-    13: "advanced", 14: "advanced", 15: "advanced"
+    4: "very_easy", 5: "very_easy", 6: "very_easy",
+    7: "easy", 8: "easy", 9: "easy",
+    10: "medium", 11: "medium_hard", 12: "medium_hard",
+    13: "advanced", 14: "advanced", 15: "advanced",
+    16: "advanced", 17: "advanced", 18: "advanced"
   };
 
   function slugify(text) {
@@ -123,12 +123,15 @@ var QuestionBank = (function () {
   }
 
   function getAgeTier(age) {
+    if (typeof QuizCore !== "undefined" && QuizCore.getAgeTier) {
+      return QuizCore.getAgeTier(age);
+    }
     var n = parseInt(age, 10);
-    if (n >= 5 && n <= 6) return { label: "5–6 years", min: 5, max: 6, difficulty: "very_easy" };
-    if (n >= 7 && n <= 8) return { label: "7–8 years", min: 7, max: 8, difficulty: "easy" };
-    if (n >= 9 && n <= 10) return { label: "9–10 years", min: 9, max: 10, difficulty: "medium" };
-    if (n >= 11 && n <= 12) return { label: "11–12 years", min: 11, max: 12, difficulty: "medium_hard" };
+    if (n >= 4 && n <= 6) return { label: "4–6 years", min: 4, max: 6, difficulty: "very_easy" };
+    if (n >= 7 && n <= 9) return { label: "7–9 years", min: 7, max: 9, difficulty: "easy" };
+    if (n >= 10 && n <= 12) return { label: "10–12 years", min: 10, max: 12, difficulty: "medium" };
     if (n >= 13 && n <= 15) return { label: "13–15 years", min: 13, max: 15, difficulty: "advanced" };
+    if (n >= 16) return { label: "16+ years", min: 16, max: 120, difficulty: "advanced" };
     return null;
   }
 

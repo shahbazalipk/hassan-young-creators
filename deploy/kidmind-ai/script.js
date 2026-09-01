@@ -1193,7 +1193,7 @@
         var questionCount = countInput ? parseInt(countInput.value, 10) : 10;
 
         if (!name || !Security.isValidAge(age)) {
-          AppFallback.showError("Please enter a valid name and age (5–15).");
+          AppFallback.showError("Please enter a valid name and age (4–18).");
           return;
         }
         if (!Security.isValidQuestionCount(questionCount)) {
